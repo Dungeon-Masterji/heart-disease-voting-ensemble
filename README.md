@@ -1,226 +1,137 @@
 # HeartGuard AI — Multi-Model Diagnosis Support Tool
 
-> A voting-ensemble clinical decision-support tool that flags high-risk heart-disease cases, built with scikit-learn, FastAPI, and React.
-
-[![Python](https://img.shields.io/badge/Python-3.11-blue)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.110-green)](https://fastapi.tiangolo.com/)
-[![React](https://img.shields.io/badge/React-18-blue)](https://react.dev/)
-[![scikit-learn](https://img.shields.io/badge/scikit--learn-latest-orange)](https://scikit-learn.org/)
-[![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
-
----
+A 12-week student project building a voting-ensemble clinical
+decision-support prototype on the UCI Heart Disease (Cleveland) dataset.
+**This repository currently reflects Weeks 1–3 of that plan**: research,
+requirements, data ingestion, data validation, and exploratory data
+analysis. The Voting Classifier, FastAPI backend, and React frontend
+described in the full PRD are future work and are not in this repo yet —
+see [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md) for exactly what's
+done vs. planned.
 
 ## ⚠️ Disclaimer
 
-**This is an educational clinical decision-support prototype — NOT a medical device.**
-All predictions are advisory risk signals, not diagnoses. Every output requires review by a qualified medical professional. This project has no FDA/CE or any other regulatory approval and must not be used for real clinical decisions.
+Educational prototype only. Not a medical device, not validated for
+clinical use, and (once a model exists) any prediction will be an advisory
+risk signal, not a diagnosis, requiring review by a qualified medical
+professional.
 
----
+## Problem statement
 
-## 📌 Problem Statement
+Clinical teams need a repeatable, data-driven signal to help prioritize
+patients with elevated estimated heart-disease risk, for human-in-the-loop
+diagnostic workflows — not to replace clinical judgment.
 
-Clinical teams need a repeatable, data-driven signal to prioritize patients with elevated estimated heart-disease risk. Manual screening is inconsistent and time-consuming. This tool provides a model-driven **risk flag** for human-in-the-loop diagnostic workflows — helping physicians focus attention on high-risk cases without replacing clinical judgment.
+## What's actually implemented (Weeks 1–3)
 
-## 💡 Solution
+- **Data ingestion** (`training/src/data/ingestion.py`) — loads the raw CSV
+  and enforces the documented column schema.
+- **Data validation** (`training/src/data/validation.py`) — checks
+  missingness, duplicates, dtypes, and out-of-documented-range values;
+  writes a JSON report.
+- **EDA** (`training/src/eda/run_eda.py`) — target distribution,
+  feature distributions, correlation heatmap, missingness heatmap,
+  target-grouped boxplots, and a written findings summary.
+- **Tests** (`training/tests/test_data.py`) — 10 passing tests covering
+  ingestion and validation against the real 303-row dataset.
 
-A **Voting Classifier ensemble** (hard & soft voting) trained on the UCI Heart Disease dataset, evaluated with **stratified 5-fold cross-validation**, and served through a FastAPI backend with a React clinician UI.
+Real findings from this dataset (not placeholders) are documented in
+[`training/artifacts/eda/eda_summary.md`](training/artifacts/eda/eda_summary.md)
+and [`docs/DATA_DICTIONARY.md`](docs/DATA_DICTIONARY.md) — for example: a
+1.2:1 class balance, 1 duplicate row, and 7 rows with out-of-documented-range
+`ca`/`thal` codes likely corresponding to the original dataset's missing
+values.
 
-Grounded in *"Popular Ensemble Methods: An Empirical Study"* (Journal of Artificial Intelligence Research, 1999) — combining multiple diverse learners improves generalization over any single model.
+## Not yet built
 
-## ✨ Features
+Feature engineering, baseline model, Voting Classifier (hard/soft voting),
+hyperparameter tuning, stratified 5-fold CV, threshold selection, FastAPI
+API, React UI, and model card are Week 4+ deliverables per the roadmap
+below. No API, no server, and no trained model exist in this snapshot.
 
-- **EDA** — distributions, correlations, missingness, and target analysis with visualizations
-- **Leakage-safe preprocessing** — all transformations fitted within CV training folds only
-- **Baseline model** — Logistic Regression / Dummy classifier for a performance floor
-- **Voting Classifier** — hard & soft voting strategies with diverse base estimators (LR, RF, GBM, SVM)
-- **Stratified 5-fold CV** — honest, leakage-free model selection and hyperparameter tuning
-- **Clinical metrics** — Sensitivity, Specificity, F1-score at the chosen operating threshold
-- **Risk flagging** — High Risk / Low Risk tiers with documented clinical rationale
-- **FastAPI REST API** — Pydantic validation, health checks, model versioning
-- **React clinician UI** — scoring form, risk result display, performance dashboard
-- **Model card** — capabilities, limitations, and ethical considerations
-- **Experiment tracking** — seeds, configs, metrics, and artifact versioning
-
-## 🏗️ Architecture
-
-```
-┌─────────────┐   HTTPS    ┌──────────────┐   ┌──────────────────────┐
-│  React +    │ ─────────> │   FastAPI    │──>│  Preprocessing Pipe  │
-│ Tailwind UI │   Axios    │  (Uvicorn)   │   │  (fitted at train)   │
-└─────────────┘            └──────────────┘   └──────────┬───────────┘
-                                                         │
-                              ┌──────────────────────────▼───────────┐
-                              │   Voting Classifier (hard/soft)      │
-                              └──────────────────────────┬───────────┘
-                                                         │
-                              ┌──────────────────────────▼───────────┐
-                              │   Risk-Flag Mapper (threshold)       │
-                              └──────────────────────────┬───────────┘
-                                                         │
-                              JSON: risk_probability, risk_flag,
-                              model_version, disclaimer
-```
-
-**Training pipeline:** UCI Dataset → Ingestion & Validation → EDA → Feature Engineering → Baseline → Voting Classifier → Hyperparameter Tuning (within CV) → Stratified 5-Fold CV → Threshold Selection → Versioned Artifact Export
-
-## 🛠️ Tech Stack
-
-| Layer | Technologies |
-|---|---|
-| Core ML (Python) | scikit-learn, pandas, NumPy, matplotlib, joblib |
-| Backend | FastAPI, Pydantic, Uvicorn |
-| Frontend (minimal JS) | React, Tailwind CSS, Axios |
-| Testing | pytest, HTTPX, React Testing Library |
-| Deployment | Docker, Uvicorn/Gunicorn |
-
-## 🗂️ Repository Structure
+## Repository structure
 
 ```
-heartguard-ai/
-├── docs/                  # BRD, PRD, ADRs, architecture diagrams
-├── data/                  # Raw & processed data (gitignored)
+heart-disease-voting-ensemble/
+├── docs/
+│   ├── DATA_DICTIONARY.md      # dataset provenance, schema, known issues
+│   ├── PROJECT_STATUS.md       # done vs. planned, mapped to the PRD
+│   └── adr/                    # architecture decision records made so far
+├── data/
+│   ├── raw/                    # fetched via scripts/download_data.py (gitignored)
+│   └── processed/              # reserved for Week 4 (gitignored)
 ├── training/
 │   ├── src/
-│   │   ├── data/          # Ingestion, validation, splits
-│   │   ├── eda/           # Distributions, correlations, target analysis
-│   │   ├── features/      # Leakage-safe preprocessing & engineering
-│   │   ├── models/        # Baseline, voting ensemble, tuning, evaluation
-│   │   └── experiments/   # Experiment tracking
-│   ├── notebooks/         # EDA & experiment notebooks
-│   ├── configs/           # Hyperparameter search spaces
-│   └── artifacts/         # Versioned model artifacts (gitignored / DVC)
-├── backend/
-│   ├── app/
-│   │   ├── api/           # health.py, score.py, model.py, model_card.py
-│   │   ├── core/          # config, predictor, pipeline
-│   │   ├── models/        # Pydantic schemas
-│   │   └── utils/
-│   ├── tests/             # Unit, integration, API tests
-│   └── Dockerfile
-├── frontend/
-│   └── src/
-│       ├── components/    # RiskForm, RiskResult, MetricsDashboard, ModelCard
-│       ├── pages/         # ScorePage, DashboardPage, ModelCardPage
-│       ├── services/      # api.ts (Axios)
-│       └── hooks/         # usePrediction.ts
-├── scripts/               # setup.sh, train.sh, download_data.py
-└── .github/workflows/     # lint-test.yml, deploy.yml
+│   │   ├── data/                # schema.py, ingestion.py, validation.py
+│   │   └── eda/                 # run_eda.py
+│   ├── tests/                   # test_data.py
+│   ├── artifacts/eda/           # generated plots + eda_summary.md
+│   └── requirements.txt
+├── scripts/
+│   └── download_data.py
+├── LICENSE
+└── README.md
 ```
 
-## 🚀 Getting Started
+## Getting started
 
 ### Prerequisites
 - Python 3.11+
-- Node.js 18+
 
-### 1. Clone & set up environment
+### 1. Set up the environment
 ```bash
-git clone https://github.com/<your-username>/heartguard-ai.git
-cd heartguard-ai
 python -m venv venv && source venv/bin/activate
-pip install -r backend/requirements.txt
+pip install -r training/requirements.txt
 ```
 
-### 2. Download the dataset
+### 2. Get the dataset
 ```bash
 python scripts/download_data.py
 ```
+This fetches a 303-row, 14-column recoded CSV of the UCI Cleveland Heart
+Disease data. See `docs/DATA_DICTIONARY.md` for exactly what "recoded"
+means and why.
 
-### 3. Train the model
+### 3. Run ingestion, validation, and EDA
 ```bash
-cd training
-python -m src.models.voting_ensemble
+python -m training.src.data.ingestion
+python -m training.src.data.validation
+python -m training.src.eda.run_eda
+```
+Validation prints a summary and writes `training/artifacts/validation_report.json`.
+EDA writes plots and `eda_summary.md` to `training/artifacts/eda/`.
+
+### 4. Run the tests
+```bash
+pytest training/tests/ -v
 ```
 
-### 4. Start the API
-```bash
-cd ../backend
-uvicorn app.main:app --reload
-```
+## Tech stack (current scope)
 
-### 5. Start the frontend
-```bash
-cd ../frontend
-npm install && npm run dev
-```
+| Layer | Technologies |
+|---|---|
+| Data / EDA | Python 3.11, pandas, NumPy, matplotlib, seaborn |
+| Testing | pytest |
 
-## 🔌 API Reference
+FastAPI, scikit-learn (Voting Classifier), React, and Tailwind will be added
+to this table as they're actually implemented in later weeks.
 
-Base URL: `/api/v1` · Content-Type: `application/json`
+## Roadmap
 
-| Endpoint | Method | Description |
+| Phase | Weeks | Status |
 |---|---|---|
-| `/health` | GET | Service status, `model_loaded`, model version |
-| `/score` | POST | Submit patient features → risk probability, risk flag, model version, disclaimer |
-| `/model` | GET | Model metadata: version, voting strategy, threshold, metrics, CV summary |
-| `/model-card` | GET | Model card as JSON |
+| Research | 1 | Done |
+| Requirements | 2 | Done |
+| Data (ingestion, validation, EDA) | 3 | **Done — this repo** |
+| Features | 4 | Not started |
+| Baseline | 5 | Not started |
+| Ensemble (Voting Classifier) | 6–7 | Not started |
+| Evaluation | 8 | Not started |
+| API (FastAPI) | 9 | Not started |
+| Frontend (React) | 10 | Not started |
+| Integration | 11 | Not started |
+| Finalization | 12 | Not started |
 
-**Example — POST /score**
-
-```json
-// Request
-{
-  "age": 63, "sex": 1, "cp": 3, "trestbps": 145, "chol": 233,
-  "fbs": 1, "restecg": 0, "thalach": 150, "exang": 0,
-  "oldpeak": 2.3, "slope": 0, "ca": 0, "thal": 1
-}
-
-// Response (200)
-{
-  "risk_probability": 0.87,
-  "risk_flag": "High Risk",
-  "model_version": "m1.0.0",
-  "voting_strategy": "soft",
-  "threshold": 0.5,
-  "timestamp": "2026-09-09T00:00:00Z",
-  "disclaimer": "Clinical decision-support signal, not a medical diagnosis."
-}
-```
-
-**Error codes:** `400` malformed JSON · `422` validation error · `429` rate limit · `503` model unavailable · `500` server error
-
-## 🧪 Testing
-
-```bash
-cd backend && pytest          # API, unit & integration tests
-cd training && pytest         # Data science tests (CV reproducibility, leakage)
-cd frontend && npm test       # UI tests
-```
-
-## 🔒 Security & Responsible Use
-
-- Pydantic input validation with clinical range constraints
-- No PHI in logs or the repository — synthetic data only for demos
-- SHA-256 checksums verify model artifact integrity
-- Population bias note: the UCI dataset reflects 1980s Cleveland clinic data and may not represent diverse populations
-- Human oversight: every risk flag is advisory and requires clinician confirmation
-
-## 📄 Model Card
-
-See [`docs/MODEL_CARD.md`](docs/MODEL_CARD.md) — intended use, out-of-scope uses, training data, validation method, evaluation results, ethical considerations, and monitoring plan.
-
-## 🗺️ Roadmap (12 Weeks)
-
-| Phase | Weeks | Deliverable |
-|---|---|---|
-| Research | 1 | JAIR 1999 paper + dataset study |
-| Requirements | 2 | BRD, PRD, UX wireframes |
-| Data | 3 | Ingestion, validation, EDA |
-| Features | 4 | Leakage-safe preprocessing pipeline |
-| Baseline | 5 | Baseline metrics |
-| Ensemble | 6–7 | Voting Classifier + hyperparameter tuning |
-| Evaluation | 8 | Threshold selection, Sensitivity/Specificity/F1 |
-| API | 9 | FastAPI service |
-| Frontend | 10 | React UI |
-| Integration | 11 | End-to-end tests & deployment |
-| Finalization | 12 | Model card, README, demo & viva |
-
-## 📜 License
+## License
 
 MIT — see [LICENSE](LICENSE).
-
----
-
-**Educational decision-support prototype. Not for real clinical use without appropriate validation, regulatory approval, security hardening, clinical governance, and human oversight.**
-# heart-disease-voting-ensemble
-# heart-disease-voting-ensemble

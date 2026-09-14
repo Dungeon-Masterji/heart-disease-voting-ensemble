@@ -1,0 +1,80 @@
+{
+  "n_rows": 303,
+  "n_cols": 14,
+  "missing_by_column": {
+    "age": 0,
+    "sex": 0,
+    "cp": 0,
+    "trestbps": 0,
+    "chol": 0,
+    "fbs": 0,
+    "restecg": 0,
+    "thalach": 0,
+    "exang": 0,
+    "oldpeak": 0,
+    "slope": 0,
+    "ca": 0,
+    "thal": 0,
+    "target": 0
+  },
+  "total_missing_cells": 0,
+  "n_duplicate_rows": 2,
+  "duplicate_row_indices": [
+    163,
+    164
+  ],
+  "dtype_by_column": {
+    "age": "int64",
+    "sex": "int64",
+    "cp": "int64",
+    "trestbps": "int64",
+    "chol": "int64",
+    "fbs": "int64",
+    "restecg": "int64",
+    "thalach": "int64",
+    "exang": "int64",
+    "oldpeak": "float64",
+    "slope": "int64",
+    "ca": "int64",
+    "thal": "int64",
+    "target": "int64"
+  },
+  "out_of_range": {
+    "ca": {
+      "documented_range": [
+        0,
+        3
+      ],
+      "n_out_of_range": 5,
+      "observed_bad_values": [
+        4
+      ],
+      "row_indices": [
+        92,
+        158,
+        163,
+        164,
+        251
+      ]
+    },
+    "thal": {
+      "documented_range": [
+        1,
+        3
+      ],
+      "n_out_of_range": 2,
+      "observed_bad_values": [
+        0
+      ],
+      "row_indices": [
+        48,
+        281
+      ]
+    }
+  },
+  "class_balance": {
+    "0": 138,
+    "1": 165
+  },
+  "imbalance_ratio": 1.196
+}
