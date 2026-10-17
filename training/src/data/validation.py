@@ -48,15 +48,7 @@ class ValidationReport:
 
 
 def validate_dataset(df: pd.DataFrame) -> ValidationReport:
-    """Run all data-quality checks and return a ValidationReport.
 
-    Checks performed (mirrors BR-002 acceptance criteria):
-      - missingness per column and in total
-      - exact duplicate rows
-      - dtypes per column
-      - values outside the documented clinical/coding range per feature
-      - target class balance and imbalance ratio
-    """
     missing_by_column = df.isna().sum().to_dict()
     missing_by_column = {k: int(v) for k, v in missing_by_column.items()}
     total_missing = int(df.isna().sum().sum())

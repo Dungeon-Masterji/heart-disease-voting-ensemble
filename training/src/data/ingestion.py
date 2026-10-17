@@ -24,25 +24,6 @@ DEFAULT_RAW_PATH = Path(__file__).resolve().parents[3] / "data" / "raw" / "heart
 
 
 def load_raw_dataset(path: str | Path = DEFAULT_RAW_PATH) -> pd.DataFrame:
-    """Load the raw heart-disease CSV and verify it matches the expected schema.
-
-    Parameters
-    ----------
-    path : str | Path
-        Location of the raw CSV. Defaults to data/raw/heart_disease.csv.
-
-    Returns
-    -------
-    pd.DataFrame
-        Raw dataframe with columns in the documented order (see schema.py).
-
-    Raises
-    ------
-    FileNotFoundError
-        If the raw file is missing (run `python scripts/download_data.py` first).
-    ValueError
-        If the file's columns don't match the documented schema.
-    """
     path = Path(path)
     if not path.exists():
         raise FileNotFoundError(

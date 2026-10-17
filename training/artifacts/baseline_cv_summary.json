@@ -1,0 +1,34 @@
+{
+  "('sensitivity', 'mean')": {
+    "dummy": 1.0,
+    "logreg": 0.915
+  },
+  "('sensitivity', 'std')": {
+    "dummy": 0.0,
+    "logreg": 0.058
+  },
+  "('specificity', 'mean')": {
+    "dummy": 0.0,
+    "logreg": 0.803
+  },
+  "('specificity', 'std')": {
+    "dummy": 0.0,
+    "logreg": 0.148
+  },
+  "('f1', 'mean')": {
+    "dummy": 0.704,
+    "logreg": 0.881
+  },
+  "('f1', 'std')": {
+    "dummy": 0.006,
+    "logreg": 0.047
+  },
+  "('roc_auc', 'mean')": {
+    "dummy": 0.5,
+    "logreg": 0.917
+  },
+  "('roc_auc', 'std')": {
+    "dummy": 0.0,
+    "logreg": 0.054
+  }
+}
