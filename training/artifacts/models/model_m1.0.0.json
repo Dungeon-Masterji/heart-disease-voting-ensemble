@@ -2,13 +2,14 @@
   "model_name": "Voting Classifier Heart Disease Risk Flag",
   "model_version": "m1.0.0",
   "voting_strategy": "soft",
-  "training_date": "2026-10-17",
+  "threshold": 0.5000575873252479,
+  "threshold_rationale": "Maximise specificity subject to sensitivity >= 0.9 on out-of-fold predictions.",
+  "training_date": "2026-11-07",
   "n_training_rows": 302,
-  "seed": 42,
   "hyperparameters": {
     "clf__weights": [
       2,
-      1,
+      2,
       1,
       1
     ],
@@ -16,50 +17,73 @@
     "clf__svm__gamma": 0.01,
     "clf__svm__C": 0.1,
     "clf__rf__min_samples_leaf": 1,
-    "clf__rf__max_depth": 8,
-    "clf__lr__C": 1,
+    "clf__rf__max_depth": 3,
+    "clf__lr__C": 0.1,
     "clf__gb__n_estimators": 50,
     "clf__gb__max_depth": 2,
     "clf__gb__learning_rate": 0.03
   },
-  "threshold": 0.5,
-  "threshold_rationale": "Maximise specificity subject to sensitivity >= 0.9 on out-of-fold predictions.",
   "metrics_at_threshold_oof": {
     "sensitivity": 0.9024390243902439,
     "specificity": 0.7971014492753623,
     "precision": 0.8409090909090909,
     "f1": 0.8705882352941177
   },
-  "metrics_honest_check": {
-    "sensitivity": 0.8963414634146342,
-    "specificity": 0.782608695652174
-  },
   "roc_auc_oof": 0.908271474019088,
-  "nested_cv_summary": {
-    "('sensitivity', 'mean')": {
-      "vote_soft_tuned_nested": 0.903
-    },
-    "('sensitivity', 'std')": {
-      "vote_soft_tuned_nested": 0.049
-    },
-    "('specificity', 'mean')": {
-      "vote_soft_tuned_nested": 0.796
-    },
-    "('specificity', 'std')": {
-      "vote_soft_tuned_nested": 0.146
-    },
-    "('f1', 'mean')": {
-      "vote_soft_tuned_nested": 0.872
-    },
-    "('f1', 'std')": {
-      "vote_soft_tuned_nested": 0.05
-    },
-    "('roc_auc', 'mean')": {
-      "vote_soft_tuned_nested": 0.906
-    },
-    "('roc_auc', 'std')": {
-      "vote_soft_tuned_nested": 0.059
-    }
+  "metrics_honest_check": {
+    "sensitivity": 0.9024390243902439,
+    "specificity": 0.7971014492753623
   },
-  "artifact_sha256": "1c960f3ca489c849ca1f753dee5219f4180656fe4ead0526bb949a87a5aa1bdb"
+  "cv_folds": [
+    {
+      "fold": 1,
+      "mean_test_f1": 0.8529553052930897
+    },
+    {
+      "fold": 2,
+      "mean_test_f1": 0.8679775280898876
+    },
+    {
+      "fold": 3,
+      "mean_test_f1": 0.8820778994544346
+    },
+    {
+      "fold": 4,
+      "mean_test_f1": 0.8695875827518339
+    },
+    {
+      "fold": 5,
+      "mean_test_f1": 0.8623856274627664
+    }
+  ],
+  "confusion_matrix": {
+    "tn": 110,
+    "fp": 28,
+    "fn": 16,
+    "tp": 148
+  },
+  "feature_importance": {
+    "age": 0.0018296084336762663,
+    "sex": 0.0010645529021450994,
+    "cp": 0.03185475537573339,
+    "trestbps": 0.004213935098123034,
+    "chol": 0.003929699824424493,
+    "fbs": 0.0,
+    "restecg": 0.006959120934335761,
+    "thalach": 0.024877222882682848,
+    "exang": 0.014401177324017545,
+    "oldpeak": 0.014204341384141683,
+    "slope": 0.0045402244887199576,
+    "ca": 0.04242928387432243,
+    "thal": 0.04343181072090498
+  },
+  "class_balance": {
+    "0": 138,
+    "1": 164
+  },
+  "baseline_logreg_cv": {
+    "f1": 0.881279876583678
+  },
+  "seed": 42,
+  "artifact_sha256": "de982ba3a628db4dd83230b4d3d0e9bf3c71396d7e13796c57c2401e2afc511a"
 }
