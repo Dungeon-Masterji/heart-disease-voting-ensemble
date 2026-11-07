@@ -58,6 +58,18 @@ def main():
     if choice is None:
         raise RuntimeError("No threshold satisfies the required sensitivity")
     threshold = float(choice["threshold"])
+    cv_folds = []
+    for (train_idx, test_idx), row in zip(cv.split(X, y), nested_rows):
+        fold_predictions = oof[test_idx] >= threshold
+        fold_metrics = metrics_at(y.iloc[test_idx], fold_predictions, threshold)
+        cv_folds.append({
+            "fold": int(row["fold"]),
+            "sensitivity": fold_metrics["sensitivity"],
+            "specificity": fold_metrics["specificity"],
+            "f1": fold_metrics["f1"],
+            "roc_auc": float(roc_auc_score(y.iloc[test_idx], oof[test_idx])),
+            "mean_test_f1": float(row["mean_test_f1"]),
+        })
 
     final_model = final_search.best_estimator_.fit(X, y)
     predictions = oof >= threshold
