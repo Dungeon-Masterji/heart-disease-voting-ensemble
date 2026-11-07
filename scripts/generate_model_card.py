@@ -164,8 +164,8 @@ def build_card(meta: dict) -> str:
             )
     a("\n## 7. Ethical considerations and limitations\n")
     a(
-        "- **Population bias:** single hospital, 1980s data, ~300 patients; likely under-represents women, younger "
-        "patients and minority groups. No subgroup analysis was performed (too few patients)."
+        "- **Population bias:** single hospital, 1980s data, ~300 patients; subgroup coverage is limited and "
+        "descriptive subgroup estimates can be unstable in small groups."
     )
     a("- **Historical bias:** labels reflect the diagnostic practice of the era.")
     a(

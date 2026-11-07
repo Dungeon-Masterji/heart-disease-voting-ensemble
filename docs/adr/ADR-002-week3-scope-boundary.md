@@ -1,6 +1,6 @@
-# ADR-002: Hold the repository strictly to Week 1-3 PRD scope
+# ADR-002: Preserve Week 1-3 scope boundary
 
-**Status:** Accepted (Week 3)
+**Status:** Superseded; retained as a historical Week 3 decision.
 
 ## Context
 The 12-week PRD roadmap (§17) scopes Weeks 1-3 to research, requirements,
@@ -8,16 +8,14 @@ and data ingestion/validation/EDA only. The Voting Classifier, FastAPI
 service, and React UI are Weeks 5-11 deliverables.
 
 ## Decision
-This repository currently ships only what Weeks 1-3 deliver:
-data ingestion, validation, and EDA, with real generated artifacts and
-passing tests. `backend/` and `frontend/` are intentionally not present yet.
-The README states this scope explicitly instead of describing the full
-12-week end state as if it were already built.
+At its original Week 3 decision point, this repository shipped only data
+ingestion, validation, and EDA, with real generated artifacts and passing
+tests. Later project chunks added the training, API, frontend, Docker, and
+documentation work described by the full PRD. This ADR is preserved as
+historical context, not as a current repository-state statement.
 
 ## Consequences
-- No FastAPI, no React, no trained model, no Voting Classifier code exist in
-  this snapshot — they will be added in the corresponding weeks per the
-  PRD roadmap, each with their own working code and tests before being
-  described in the README.
+- The original decision prevented later deliverables from being implied
+  before they had working code and tests.
 - Badges, API examples, and setup instructions for unbuilt components are
   removed from the README rather than presented as if functional.

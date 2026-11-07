@@ -79,7 +79,7 @@ That difference is smaller than the fold-to-fold standard deviation, so on this 
 
 ## 7. Ethical considerations and limitations
 
-- **Population bias:** single hospital, 1980s data, ~300 patients; likely under-represents women, younger patients and minority groups. No subgroup analysis was performed (too few patients).
+- **Population bias:** single hospital, 1980s data, ~300 patients; subgroup coverage is limited and descriptive subgroup estimates can be unstable in small groups.
 - **Historical bias:** labels reflect the diagnostic practice of the era.
 - **Small sample:** fold-level metrics vary a lot (about 60 patients per fold); treat differences of a few points as noise.
 - **Prevalence:** this dataset is roughly half positive, far above real screening prevalence; precision in practice would be much lower than reported here.

@@ -1,30 +1,25 @@
 # Project Status
 
-Full requirements live in the PRD (`Multi-Model Diagnosis Support Tool —
-PRD`, Polaris Product Company Standard, 12-week Advanced Data Science
-track). This file tracks what has actually been **built and verified** so
-far against that plan, so the README never has to overstate progress.
+Tracks what is built and how it was verified, mapped to the 12-week PRD plan.
+Update the "Verified" column only after you have actually run the check.
 
-## Done (Weeks 1–3)
-
-| Week | PRD Deliverable | Status | Evidence |
+| Week | Deliverable | Where | Verified by |
 |---|---|---|---|
-| 1 | Research grounding (JAIR 1999 ensemble paper) + dataset study | Done | `docs/DATA_DICTIONARY.md` |
-| 2 | Requirements docs, repo scaffold | Done | this `docs/` tree, `docs/adr/` |
-| 3 | Data ingestion | Done | `training/src/data/ingestion.py`, `training/tests/test_data.py` |
-| 3 | Data validation (missingness, duplicates, dtypes, ranges) | Done | `training/src/data/validation.py`, `training/artifacts/validation_report.json` |
-| 3 | EDA (distributions, correlations, target analysis) | Done | `training/src/eda/run_eda.py`, `training/artifacts/eda/` |
+| 1-2 | Research, requirements, ADRs | `docs/` | Not re-run in this implementation session |
+| 3 | Ingestion, validation, EDA | `training/src/data`, `training/src/eda` | `source venv/bin/activate && python -m pytest training/tests -q` (23 passed) |
+| 4 | Leakage-safe preprocessing | `training/src/features/preprocessing.py` | Included in the training test run above |
+| 5 | Baseline (dummy, logistic regression) | `training/src/models/baseline.py`, training artifacts | Included in quick/full training runs |
+| 6 | Voting Classifier (hard/soft) | `training/src/models/voting_ensemble.py`, training artifacts | `source venv/bin/activate && python -m training.src.models.train --quick` |
+| 7 | Nested-CV tuning | `training/src/models/tuning.py` | Quick and full training commands completed |
+| 8 | Threshold, evaluation, error analysis, model artifact | `training/src/models/`, `training/artifacts/models/` | Quick/full training completed; full run reported F1 0.871 |
+| 9 | FastAPI service | `backend/app` | Backend tests, `uvicorn`, smoke test, and Docker smoke were run in earlier project verification |
+| 10 | React UI | `frontend/` | Typecheck, 15 tests, and production build were run in earlier project verification |
+| 11 | Integration, CI, Docker | `.github/workflows/ci.yml`, `backend/Dockerfile` | Quality gates and Docker image/container smoke were run in earlier project verification |
+| 12 | Model card, README, demo | `scripts/generate_model_card.py`, `docs/MODEL_CARD.md` | `python scripts/generate_model_card.py` (regenerated in this chunk) |
 
-All of the above run end-to-end with real output committed under
-`training/artifacts/` (generated from the actual 303-row dataset — see
-`docs/DATA_DICTIONARY.md`), and `training/tests/test_data.py` passes
-against that data.
-
-## Not started yet (Weeks 4–12)
-
-Feature engineering, baseline model, Voting Classifier (hard/soft voting),
-hyperparameter tuning, stratified 5-fold CV, threshold selection, FastAPI
-backend, React frontend, model card, and deployment are all **future work**
-per the PRD roadmap (§17) and are not represented by any code in this
-repository yet. They will be added incrementally, week by week, with their
-own tests and documentation — not described in the README until they exist.
+## Known limitations (be upfront in the viva)
+- Tuned ensemble ~ logistic regression within noise on 302 patients.
+- 1980s single-site data; descriptive subgroup analysis exists, but small samples limit conclusions; no external validation.
+- No drift/calibration monitoring, no authentication, no deployment to a live
+  host, no `deploy.yml` workflow. Rate limiter is per-process.
+- Batch scoring is not implemented.
