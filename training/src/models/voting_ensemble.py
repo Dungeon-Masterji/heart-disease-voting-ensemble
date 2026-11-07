@@ -1,4 +1,8 @@
-from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier, VotingClassifier
+from sklearn.ensemble import (
+    GradientBoostingClassifier,
+    RandomForestClassifier,
+    VotingClassifier,
+)
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
@@ -22,7 +26,9 @@ def build_voting(strategy: str = "soft", seed: int = 42) -> VotingClassifier:
 
 
 def make_tuning_pipeline(seed: int = 42) -> Pipeline:
-    return Pipeline([
-        ("prep", build_preprocessor()),
-        ("clf", build_voting("soft", seed)),
-    ])
+    return Pipeline(
+        [
+            ("prep", build_preprocessor()),
+            ("clf", build_voting("soft", seed)),
+        ]
+    )

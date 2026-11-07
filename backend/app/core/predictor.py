@@ -6,19 +6,34 @@ Responsibilities (PRD TR-010, TR-011, security design):
   * load the already-fitted pipeline (no fitting ever happens at serving time)
   * map probability -> High Risk / Low Risk using the documented threshold
 """
+
 import hashlib
 import json
 import math
 import statistics
 import sys
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Mapping, Optional
+from typing import Any
 
 import joblib
 import pandas as pd
 
-FEATURE_ORDER = ["age", "sex", "cp", "trestbps", "chol", "fbs", "restecg",
-                 "thalach", "exang", "oldpeak", "slope", "ca", "thal"]
+FEATURE_ORDER = [
+    "age",
+    "sex",
+    "cp",
+    "trestbps",
+    "chol",
+    "fbs",
+    "restecg",
+    "thalach",
+    "exang",
+    "oldpeak",
+    "slope",
+    "ca",
+    "thal",
+]
 DISCLAIMER = "Clinical decision-support signal, not a medical diagnosis."
 HIGH_RISK = "High Risk"
 LOW_RISK = "Low Risk"
@@ -62,14 +77,17 @@ def clean_json(obj: Any) -> Any:
     return obj
 
 
-def summarise_folds(folds: Optional[list]) -> Optional[dict]:
+def summarise_folds(folds: list | None) -> dict | None:
     """Mean and sample std (ddof=1, same as pandas) of each metric across CV folds."""
     if not folds:
         return None
     mean, std = {}, {}
     for m in _FOLD_METRICS:
-        vals = [f[m] for f in folds
-                if isinstance(f.get(m), (int, float)) and not math.isnan(f[m])]
+        vals = [
+            f[m]
+            for f in folds
+            if isinstance(f.get(m), (int, float)) and not math.isnan(f[m])
+        ]
         if vals:
             mean[m] = round(statistics.fmean(vals), 4)
             std[m] = round(statistics.stdev(vals), 4) if len(vals) > 1 else 0.0
@@ -85,7 +103,9 @@ class Predictor:
         self.voting_strategy: str = meta.get("voting_strategy", "soft")
 
     @classmethod
-    def load(cls, model_path: Path, meta_path: Path, verify_checksum: bool = True) -> "Predictor":
+    def load(
+        cls, model_path: Path, meta_path: Path, verify_checksum: bool = True
+    ) -> "Predictor":
         model_path, meta_path = Path(model_path), Path(meta_path)
         if not model_path.exists():
             raise ModelUnavailable(f"Model artifact not found: {model_path}")
@@ -101,21 +121,29 @@ class Predictor:
         if verify_checksum:
             expected = meta.get("artifact_sha256")
             if not expected:
-                raise ModelUnavailable("Model metadata has no artifact_sha256 to verify against")
+                raise ModelUnavailable(
+                    "Model metadata has no artifact_sha256 to verify against"
+                )
             if sha256_of(model_path) != expected:
-                raise ModelUnavailable("Model artifact checksum mismatch (file changed or corrupted)")
+                raise ModelUnavailable(
+                    "Model artifact checksum mismatch (file changed or corrupted)"
+                )
         _ensure_repo_root_on_path()
         try:
             model = joblib.load(model_path)
-        except Exception as exc:  # noqa: BLE001 - any unpickling failure means 'unavailable'
-            raise ModelUnavailable(f"Model artifact could not be loaded: {exc}") from exc
+        except Exception as exc:
+            raise ModelUnavailable(
+                f"Model artifact could not be loaded: {exc}"
+            ) from exc
         return cls(model, meta)
 
     def predict(self, features: Mapping[str, float]) -> dict:
         missing = [f for f in FEATURE_ORDER if f not in features]
         if missing:
             raise ValueError(f"Missing features: {missing}")
-        row = pd.DataFrame([[features[f] for f in FEATURE_ORDER]], columns=FEATURE_ORDER)
+        row = pd.DataFrame(
+            [[features[f] for f in FEATURE_ORDER]], columns=FEATURE_ORDER
+        )
         probability = float(self._model.predict_proba(row)[0, 1])
         return {
             "risk_probability": round(probability, 4),
@@ -131,19 +159,21 @@ class Predictor:
         metrics = dict(m.get("metrics_at_threshold_oof", {}))
         if "roc_auc_oof" in m:
             metrics["roc_auc"] = m["roc_auc_oof"]
-        return clean_json({
-            "model_version": self.version,
-            "voting_strategy": self.voting_strategy,
-            "threshold": self.threshold,
-            "threshold_rationale": m.get("threshold_rationale", ""),
-            "training_date": m.get("training_date", ""),
-            "n_training_rows": m.get("n_training_rows"),
-            "class_balance": m.get("class_balance"),
-            "metrics": metrics,
-            "honest_check": m.get("metrics_honest_check"),
-            "cv_summary": summarise_folds(m.get("cv_folds")),
-            "confusion_matrix": m.get("confusion_matrix"),
-            "feature_importance": m.get("feature_importance"),
-            "baseline_logreg_cv": m.get("baseline_logreg_cv"),
-            "curves": clean_json(m.get("curves")),
-        })
+        return clean_json(
+            {
+                "model_version": self.version,
+                "voting_strategy": self.voting_strategy,
+                "threshold": self.threshold,
+                "threshold_rationale": m.get("threshold_rationale", ""),
+                "training_date": m.get("training_date", ""),
+                "n_training_rows": m.get("n_training_rows"),
+                "class_balance": m.get("class_balance"),
+                "metrics": metrics,
+                "honest_check": m.get("metrics_honest_check"),
+                "cv_summary": summarise_folds(m.get("cv_folds")),
+                "confusion_matrix": m.get("confusion_matrix"),
+                "feature_importance": m.get("feature_importance"),
+                "baseline_logreg_cv": m.get("baseline_logreg_cv"),
+                "curves": clean_json(m.get("curves")),
+            }
+        )

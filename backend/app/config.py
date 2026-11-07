@@ -1,4 +1,5 @@
 """Runtime settings, read from environment variables with safe local defaults."""
+
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -23,6 +24,12 @@ class Settings:
             model_path=Path(os.getenv("MODEL_PATH", str(d.model_path))),
             meta_path=Path(os.getenv("META_PATH", str(d.meta_path))),
             model_card_path=Path(os.getenv("MODEL_CARD_PATH", str(d.model_card_path))),
-            cors_origins=tuple(o.strip() for o in origins.split(",") if o.strip()) if origins else d.cors_origins,
-            rate_limit_per_minute=int(os.getenv("RATE_LIMIT_PER_MINUTE", str(d.rate_limit_per_minute))),
+            cors_origins=(
+                tuple(o.strip() for o in origins.split(",") if o.strip())
+                if origins
+                else d.cors_origins
+            ),
+            rate_limit_per_minute=int(
+                os.getenv("RATE_LIMIT_PER_MINUTE", str(d.rate_limit_per_minute))
+            ),
         )

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
@@ -17,6 +17,8 @@ def health(request: Request):
         status="ok" if loaded else "unavailable",
         model_loaded=loaded,
         model_version=predictor.version if loaded else None,
-        timestamp=datetime.now(timezone.utc).isoformat(),
+        timestamp=datetime.now(UTC).isoformat(),
     )
-    return JSONResponse(status_code=200 if loaded else 503, content=body.model_dump(mode="json"))
+    return JSONResponse(
+        status_code=200 if loaded else 503, content=body.model_dump(mode="json")
+    )

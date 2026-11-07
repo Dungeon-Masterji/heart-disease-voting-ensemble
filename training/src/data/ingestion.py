@@ -20,7 +20,9 @@ from .schema import ALL_COLUMNS
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
-DEFAULT_RAW_PATH = Path(__file__).resolve().parents[3] / "data" / "raw" / "heart_disease.csv"
+DEFAULT_RAW_PATH = (
+    Path(__file__).resolve().parents[3] / "data" / "raw" / "heart_disease.csv"
+)
 
 
 def load_raw_dataset(path: str | Path = DEFAULT_RAW_PATH) -> pd.DataFrame:
@@ -42,7 +44,12 @@ def load_raw_dataset(path: str | Path = DEFAULT_RAW_PATH) -> pd.DataFrame:
         )
 
     df = df[ALL_COLUMNS]
-    logger.info("Loaded raw dataset: %s rows, %s columns from %s", df.shape[0], df.shape[1], path)
+    logger.info(
+        "Loaded raw dataset: %s rows, %s columns from %s",
+        df.shape[0],
+        df.shape[1],
+        path,
+    )
     return df
 
 

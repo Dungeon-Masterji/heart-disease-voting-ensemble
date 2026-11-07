@@ -36,8 +36,14 @@ sns.set_theme(style="whitegrid")
 def plot_target_distribution(df: pd.DataFrame, out_dir: Path) -> None:
     counts = df["target"].value_counts().sort_index()
     fig, ax = plt.subplots(figsize=(5, 4))
-    sns.barplot(x=counts.index.astype(str), y=counts.values, hue=counts.index.astype(str),
-                palette=["#4C72B0", "#C44E52"], legend=False, ax=ax)
+    sns.barplot(
+        x=counts.index.astype(str),
+        y=counts.values,
+        hue=counts.index.astype(str),
+        palette=["#4C72B0", "#C44E52"],
+        legend=False,
+        ax=ax,
+    )
     ax.set_xlabel("target (0 = absence, 1 = presence)")
     ax.set_ylabel("patient count")
     ax.set_title(f"Target class distribution (n={len(df)})")
@@ -54,7 +60,7 @@ def plot_continuous_distributions(df: pd.DataFrame, out_dir: Path) -> None:
     for ax, col in zip(axes, CONTINUOUS_FEATURES):
         sns.histplot(df[col], kde=True, ax=ax, color="#4C72B0")
         ax.set_title(col)
-    for ax in axes[len(CONTINUOUS_FEATURES):]:
+    for ax in axes[len(CONTINUOUS_FEATURES) :]:
         ax.axis("off")
     fig.suptitle("Continuous feature distributions")
     fig.tight_layout()
@@ -77,8 +83,15 @@ def plot_categorical_distributions(df: pd.DataFrame, out_dir: Path) -> None:
 def plot_correlation_heatmap(df: pd.DataFrame, out_dir: Path) -> pd.DataFrame:
     corr = df.corr(numeric_only=True)
     fig, ax = plt.subplots(figsize=(10, 8))
-    sns.heatmap(corr, annot=True, fmt=".2f", cmap="coolwarm", center=0, ax=ax,
-                annot_kws={"size": 7})
+    sns.heatmap(
+        corr,
+        annot=True,
+        fmt=".2f",
+        cmap="coolwarm",
+        center=0,
+        ax=ax,
+        annot_kws={"size": 7},
+    )
     ax.set_title("Pearson correlation matrix")
     fig.tight_layout()
     fig.savefig(out_dir / "correlation_heatmap.png", dpi=150)
@@ -96,10 +109,19 @@ def plot_missingness_heatmap(df: pd.DataFrame, out_dir: Path) -> None:
 
 
 def plot_target_boxplots(df: pd.DataFrame, out_dir: Path) -> None:
-    fig, axes = plt.subplots(1, len(CONTINUOUS_FEATURES), figsize=(4 * len(CONTINUOUS_FEATURES), 4))
+    fig, axes = plt.subplots(
+        1, len(CONTINUOUS_FEATURES), figsize=(4 * len(CONTINUOUS_FEATURES), 4)
+    )
     for ax, col in zip(axes, CONTINUOUS_FEATURES):
-        sns.boxplot(x="target", y=col, hue="target", data=df, ax=ax,
-                    palette=["#4C72B0", "#C44E52"], legend=False)
+        sns.boxplot(
+            x="target",
+            y=col,
+            hue="target",
+            data=df,
+            ax=ax,
+            palette=["#4C72B0", "#C44E52"],
+            legend=False,
+        )
         ax.set_title(col)
     fig.suptitle("Continuous features grouped by target")
     fig.tight_layout()
@@ -117,7 +139,9 @@ def iqr_outlier_counts(df: pd.DataFrame) -> dict[str, int]:
     return counts
 
 
-def write_summary(df: pd.DataFrame, corr: pd.DataFrame, outlier_counts: dict, out_dir: Path) -> None:
+def write_summary(
+    df: pd.DataFrame, corr: pd.DataFrame, outlier_counts: dict, out_dir: Path
+) -> None:
     target_corr = corr["target"].drop("target").sort_values(key=abs, ascending=False)
     top_pos = target_corr.head(3)
     counts = df["target"].value_counts().sort_index()

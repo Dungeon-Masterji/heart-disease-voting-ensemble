@@ -10,6 +10,11 @@ router = APIRouter(tags=["model"])
 def model_card(request: Request):
     path = request.app.state.settings.model_card_path
     if not path.exists():
-        raise ApiError(404, "MODEL_CARD_NOT_FOUND",
-                       "Model card not generated yet. Run: python scripts/generate_model_card.py")
-    return ModelCardResponse(format="markdown", content=path.read_text(encoding="utf-8"))
+        raise ApiError(
+            404,
+            "MODEL_CARD_NOT_FOUND",
+            "Model card not generated yet. Run: python scripts/generate_model_card.py",
+        )
+    return ModelCardResponse(
+        format="markdown", content=path.read_text(encoding="utf-8")
+    )
