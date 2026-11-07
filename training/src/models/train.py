@@ -15,6 +15,12 @@ from sklearn.metrics import (
 from sklearn.model_selection import StratifiedKFold, cross_val_score
 
 from training.src.data.ingestion import load_raw_dataset
+from training.src.eda.analysis import (
+    calibration_summary,
+    feature_target_tests,
+    subgroup_metrics,
+    variance_inflation_factors,
+)
 from training.src.experiments.tracking import (
     dataset_record,
     git_commit_hash,
@@ -120,6 +126,16 @@ def main():
     baseline_scores = cross_val_score(
         make_baseline(SEED), X, y, cv=cv, scoring="f1", n_jobs=-1
     )
+    descriptive_analysis = {
+        "vif_continuous": variance_inflation_factors(X),
+        "feature_target_tests": feature_target_tests(df.drop_duplicates()),
+        "calibration": calibration_summary(y, oof),
+        "subgroups": subgroup_metrics(X, y, oof, threshold, metrics_at),
+        "disclaimer": (
+            "Descriptive association tests are not causal; subgroup results have "
+            "limited precision in small samples."
+        ),
+    }
 
     metadata = {
         "model_name": "Voting Classifier Heart Disease Risk Flag",
@@ -159,6 +175,7 @@ def main():
             "precision_recall": pr_points,
             "threshold_marker": {"threshold": threshold},
         },
+        "analysis": descriptive_analysis,
     }
     artifacts = REPO_ROOT / "training" / "artifacts"
     model_path, metadata_path, metadata = export_model(
@@ -168,6 +185,18 @@ def main():
     pd.DataFrame(
         {"feature": list(importance), "importance": list(importance.values())}
     ).to_csv(artifacts / "week8_permutation_importance.csv", index=False)
+    pd.DataFrame(descriptive_analysis["feature_target_tests"]).to_csv(
+        artifacts / "feature_target_tests.csv", index=False
+    )
+    pd.DataFrame(descriptive_analysis["vif_continuous"]).to_csv(
+        artifacts / "continuous_vif.csv", index=False
+    )
+    pd.DataFrame(descriptive_analysis["subgroups"]).T.to_json(
+        artifacts / "subgroup_metrics.json", orient="columns", indent=2
+    )
+    pd.DataFrame(descriptive_analysis["calibration"]["curve"]).to_csv(
+        artifacts / "calibration_curve.csv", index=False
+    )
     _, run_record = write_run(
         {
             "timestamp": datetime.datetime.now(datetime.UTC).isoformat(),

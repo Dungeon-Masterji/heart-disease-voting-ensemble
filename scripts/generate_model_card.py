@@ -48,6 +48,7 @@ def build_card(meta: dict) -> str:
     cb = meta.get("class_balance") or {}
     n = meta.get("n_training_rows", "n/a")
     thr = meta.get("threshold")
+    analysis = meta.get("analysis") or {}
 
     L: list[str] = []
     a = L.append
@@ -140,7 +141,23 @@ def build_card(meta: dict) -> str:
             f"sensitivity {fmt(base.get('sensitivity'))}, ROC AUC {fmt(base.get('roc_auc'))}. "
             f"The tuned ensemble's F1 differs by {diff:+.3f}."
         )
-        if abs(diff) <= cv["f1"][1]:
+    if analysis:
+        calibration = analysis.get("calibration", {})
+        a("\n## 10. Additional descriptive analysis\n")
+        a(
+        f"- Soft-voting out-of-fold calibration Brier score: "
+        f"{fmt(calibration.get('brier_score'))}. Lower is better."
+        )
+        a(
+        "- Continuous-feature variance inflation factors and target-association tests "
+        "are recorded under `training/artifacts/`. Association is descriptive, not causal."
+        )
+        a(
+        "- Subgroup metrics at the chosen threshold are reported by sex and age band "
+        "in `training/artifacts/subgroup_metrics.json`; counts and small-sample caveats "
+        "are included. These results are not evidence of causal or generalizable subgroup differences."
+        )
+        if base and cv.get("f1") and abs(diff) <= cv["f1"][1]:
             a(
                 "That difference is smaller than the fold-to-fold standard deviation, so on this dataset the ensemble "
                 "is **not demonstrably better** than the simple baseline."

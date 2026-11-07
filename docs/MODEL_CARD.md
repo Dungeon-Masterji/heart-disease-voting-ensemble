@@ -12,8 +12,8 @@
 | Voting strategy | soft (chosen because threshold selection needs probabilities) |
 | Base estimators | Logistic Regression, Random Forest, Gradient Boosting, SVM (`probability=True`) |
 | Training date | 2026-11-07 |
-| Artifact SHA-256 | `a055fc57934ac4967608ae136b8972b51efa10a563a817591c11e051ce52bf0c` |
-| Hyperparameters | `{"clf__weights": [2, 2, 1, 1], "clf__voting": "soft", "clf__svm__gamma": 0.1, "clf__svm__C": 1, "clf__rf__min_samples_leaf": 3, "clf__rf__max_depth": 3, "clf__lr__C": 0.1, "clf__gb__n_estimators": 50, "clf__gb__max_depth": 2, "clf__gb__learning_rate": 0.03}` |
+| Artifact SHA-256 | `de982ba3a628db4dd83230b4d3d0e9bf3c71396d7e13796c57c2401e2afc511a` |
+| Hyperparameters | `{"clf__weights": [2, 2, 1, 1], "clf__voting": "soft", "clf__svm__gamma": 0.01, "clf__svm__C": 0.1, "clf__rf__min_samples_leaf": 1, "clf__rf__max_depth": 3, "clf__lr__C": 0.1, "clf__gb__n_estimators": 50, "clf__gb__max_depth": 2, "clf__gb__learning_rate": 0.03}` |
 
 ## 2. Intended use
 
@@ -42,33 +42,39 @@
 
 ## 6. Evaluation results
 
-Operating threshold: **0.5187877350889868**. Rule: Maximise specificity subject to sensitivity >= 0.9 on out-of-fold predictions.
+Operating threshold: **0.5000575873252479**. Rule: Maximise specificity subject to sensitivity >= 0.9 on out-of-fold predictions.
 
 | Metric (out-of-fold predictions) | Value |
 |---|---|
 | sensitivity | 0.902 |
-| specificity | 0.804 |
-| precision | 0.846 |
-| f1 | 0.873 |
-| ROC AUC | 0.909 |
+| specificity | 0.797 |
+| precision | 0.841 |
+| f1 | 0.871 |
+| ROC AUC | 0.908 |
 
-Honest check (threshold re-chosen inside each fold, never on the fold being scored): sensitivity 0.902, specificity 0.804.
+Honest check (threshold re-chosen inside each fold, never on the fold being scored): sensitivity 0.902, specificity 0.797.
 
 | | Predicted Low | Predicted High |
 |---|---|---|
-| **Actually no disease** | TN = 111 | FP = 27 |
+| **Actually no disease** | TN = 110 | FP = 28 |
 | **Actually disease** | FN = 16 | TP = 148 |
 
 Nested CV at threshold 0.5, mean (std) across 5 folds:
 
 | Metric | Mean | Std |
 |---|---|---|
-| sensitivity | 0.903 | 0.039 |
-| specificity | 0.803 | 0.148 |
-| f1 | 0.875 | 0.057 |
-| roc_auc | 0.912 | 0.062 |
+| sensitivity | 0.903 | 0.049 |
+| specificity | 0.796 | 0.146 |
+| f1 | 0.872 | 0.050 |
+| roc_auc | 0.906 | 0.059 |
 
-**Baseline comparison.** Plain logistic regression under the same CV scored F1 0.881, sensitivity n/a, ROC AUC n/a. The tuned ensemble's F1 differs by -0.006.
+**Baseline comparison.** Plain logistic regression under the same CV scored F1 0.881, sensitivity n/a, ROC AUC n/a. The tuned ensemble's F1 differs by -0.009.
+
+## 10. Additional descriptive analysis
+
+- Soft-voting out-of-fold calibration Brier score: 0.121. Lower is better.
+- Continuous-feature variance inflation factors and target-association tests are recorded under `training/artifacts/`. Association is descriptive, not causal.
+- Subgroup metrics at the chosen threshold are reported by sex and age band in `training/artifacts/subgroup_metrics.json`; counts and small-sample caveats are included. These results are not evidence of causal or generalizable subgroup differences.
 That difference is smaller than the fold-to-fold standard deviation, so on this dataset the ensemble is **not demonstrably better** than the simple baseline.
 
 ## 7. Ethical considerations and limitations
