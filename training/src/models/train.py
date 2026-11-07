@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from sklearn.inspection import permutation_importance
-from sklearn.metrics import confusion_matrix, roc_auc_score
+from sklearn.metrics import confusion_matrix, roc_auc_score, roc_curve, precision_recall_curve
 from sklearn.model_selection import StratifiedKFold, cross_val_score
 
 from training.src.data.ingestion import load_raw_dataset
@@ -58,6 +58,24 @@ def main():
     if choice is None:
         raise RuntimeError("No threshold satisfies the required sensitivity")
     threshold = float(choice["threshold"])
+    roc_fpr, roc_tpr, roc_thresholds = roc_curve(y, oof)
+    pr_precision, pr_recall, pr_thresholds = precision_recall_curve(y, oof)
+
+    def downsample(values, limit=101):
+        values = np.asarray(values, dtype=float)
+        if len(values) <= limit:
+            return values.tolist()
+        indices = np.unique(np.linspace(0, len(values) - 1, limit).round().astype(int))
+        return values[indices].tolist()
+
+    roc_points = [
+        {"fpr": float(fpr), "tpr": float(tpr)}
+        for fpr, tpr in zip(downsample(roc_fpr), downsample(roc_tpr))
+    ]
+    pr_points = [
+        {"precision": float(precision), "recall": float(recall)}
+        for precision, recall in zip(downsample(pr_precision), downsample(pr_recall))
+    ]
     cv_folds = []
     for (train_idx, test_idx), row in zip(cv.split(X, y), nested_rows):
         fold_predictions = oof[test_idx] >= threshold
@@ -108,6 +126,11 @@ def main():
         "class_balance": {str(k): int(v) for k, v in y.value_counts().sort_index().items()},
         "baseline_logreg_cv": {"f1": float(baseline_scores.mean())},
         "seed": SEED,
+        "curves": {
+            "roc": roc_points,
+            "precision_recall": pr_points,
+            "threshold_marker": {"threshold": threshold},
+        },
     }
     artifacts = REPO_ROOT / "training" / "artifacts"
     model_path, metadata_path, metadata = export_model(final_model, metadata, artifacts / "models")
