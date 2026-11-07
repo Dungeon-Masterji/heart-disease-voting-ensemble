@@ -1,0 +1,65 @@
+{
+  "model_name": "Voting Classifier Heart Disease Risk Flag",
+  "model_version": "m1.0.0",
+  "voting_strategy": "soft",
+  "training_date": "2026-10-17",
+  "n_training_rows": 302,
+  "seed": 42,
+  "hyperparameters": {
+    "clf__weights": [
+      2,
+      1,
+      1,
+      1
+    ],
+    "clf__voting": "soft",
+    "clf__svm__gamma": 0.01,
+    "clf__svm__C": 0.1,
+    "clf__rf__min_samples_leaf": 1,
+    "clf__rf__max_depth": 8,
+    "clf__lr__C": 1,
+    "clf__gb__n_estimators": 50,
+    "clf__gb__max_depth": 2,
+    "clf__gb__learning_rate": 0.03
+  },
+  "threshold": 0.5,
+  "threshold_rationale": "Maximise specificity subject to sensitivity >= 0.9 on out-of-fold predictions.",
+  "metrics_at_threshold_oof": {
+    "sensitivity": 0.9024390243902439,
+    "specificity": 0.7971014492753623,
+    "precision": 0.8409090909090909,
+    "f1": 0.8705882352941177
+  },
+  "metrics_honest_check": {
+    "sensitivity": 0.8963414634146342,
+    "specificity": 0.782608695652174
+  },
+  "roc_auc_oof": 0.908271474019088,
+  "nested_cv_summary": {
+    "('sensitivity', 'mean')": {
+      "vote_soft_tuned_nested": 0.903
+    },
+    "('sensitivity', 'std')": {
+      "vote_soft_tuned_nested": 0.049
+    },
+    "('specificity', 'mean')": {
+      "vote_soft_tuned_nested": 0.796
+    },
+    "('specificity', 'std')": {
+      "vote_soft_tuned_nested": 0.146
+    },
+    "('f1', 'mean')": {
+      "vote_soft_tuned_nested": 0.872
+    },
+    "('f1', 'std')": {
+      "vote_soft_tuned_nested": 0.05
+    },
+    "('roc_auc', 'mean')": {
+      "vote_soft_tuned_nested": 0.906
+    },
+    "('roc_auc', 'std')": {
+      "vote_soft_tuned_nested": 0.059
+    }
+  },
+  "artifact_sha256": "1c960f3ca489c849ca1f753dee5219f4180656fe4ead0526bb949a87a5aa1bdb"
+}
