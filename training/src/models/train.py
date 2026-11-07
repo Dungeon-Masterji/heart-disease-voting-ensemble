@@ -16,6 +16,9 @@ from training.src.models.evaluation import metrics_at, sweep_thresholds
 from training.src.models.export import export_model
 from training.src.models.threshold import select_threshold
 from training.src.models.tuning import final_soft_search, nested_soft_cv
+from training.src.experiments.tracking import (
+    dataset_record, git_commit_hash, git_dirty, split_fold_indices, write_run,
+)
 
 
 SEED = 42
@@ -34,11 +37,21 @@ def main():
     final_search = final_soft_search(X, y, seed=SEED, n_iter=40, quick=args.quick)
 
     cv = StratifiedKFold(5, shuffle=True, random_state=SEED)
+    fold_indices = split_fold_indices(cv, X, y)
     oof = np.zeros(len(y), dtype=float)
     cv_folds = []
+    per_fold_metrics = []
     for (train_idx, test_idx), row in zip(cv.split(X, y), nested_rows):
         oof[test_idx] = row["model"].predict_proba(X.iloc[test_idx])[:, 1]
         cv_folds.append({"fold": int(row["fold"]), "mean_test_f1": float(row["mean_test_f1"])})
+        fold_predictions = oof[test_idx] >= 0.5
+        per_fold_metrics.append({
+            "fold": int(row["fold"]),
+            "roc_auc": float(roc_auc_score(y.iloc[test_idx], oof[test_idx])),
+            "metrics_at_default_probability": metrics_at(
+                y.iloc[test_idx], fold_predictions, 0.5
+            ),
+        })
 
     sweep = sweep_thresholds(y, oof)
     choice = select_threshold(sweep, TARGET_SENS)
@@ -90,6 +103,32 @@ def main():
     pd.DataFrame({"feature": list(importance), "importance": list(importance.values())}).to_csv(
         artifacts / "week8_permutation_importance.csv", index=False
     )
+    _, run_record = write_run({
+        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "git_commit": git_commit_hash(REPO_ROOT),
+        "git_dirty": git_dirty(REPO_ROOT),
+        "dataset": dataset_record(
+            REPO_ROOT / "data" / "raw" / "heart_disease.csv",
+            len(df), df.columns, after_cleaning=False,
+        ),
+        "seed": SEED,
+        "fold_indices": fold_indices,
+        "preprocessing": (
+            "median numeric and most-frequent categorical imputation; standard scaling; "
+            "unknown-category-tolerant one-hot encoding; leakage-safe row-wise feature engineering"
+        ),
+        "model_type": "soft VotingClassifier",
+        "hyperparameters": final_search.best_params_,
+        "cv_strategy": "StratifiedKFold(5, shuffle=True, random_state=42)",
+        "selection_metric": "f1",
+        "per_fold_metrics": per_fold_metrics,
+        "aggregated_metrics": metrics,
+        "threshold": threshold,
+        "threshold_rationale": metadata["threshold_rationale"],
+        "artifact_path": str(model_path.relative_to(REPO_ROOT)),
+        "artifact_sha256": metadata["artifact_sha256"],
+    }, artifacts)
+    print(f"run record: training/artifacts/runs/{run_record['run_id']}.json")
     print(json.dumps({
         "model": str(model_path.relative_to(REPO_ROOT)),
         "metadata": str(metadata_path.relative_to(REPO_ROOT)),

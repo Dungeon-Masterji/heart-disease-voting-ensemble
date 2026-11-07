@@ -2,7 +2,7 @@
   "model_name": "Voting Classifier Heart Disease Risk Flag",
   "model_version": "m1.0.0",
   "voting_strategy": "soft",
-  "threshold": 0.5000575873252479,
+  "threshold": 0.5187877350889868,
   "threshold_rationale": "Maximise specificity subject to sensitivity >= 0.9 on out-of-fold predictions.",
   "training_date": "2026-11-07",
   "n_training_rows": 302,
@@ -14,9 +14,9 @@
       1
     ],
     "clf__voting": "soft",
-    "clf__svm__gamma": 0.01,
-    "clf__svm__C": 0.1,
-    "clf__rf__min_samples_leaf": 1,
+    "clf__svm__gamma": 0.1,
+    "clf__svm__C": 1,
+    "clf__rf__min_samples_leaf": 3,
     "clf__rf__max_depth": 3,
     "clf__lr__C": 0.1,
     "clf__gb__n_estimators": 50,
@@ -25,23 +25,23 @@
   },
   "metrics_at_threshold_oof": {
     "sensitivity": 0.9024390243902439,
-    "specificity": 0.7971014492753623,
-    "precision": 0.8409090909090909,
-    "f1": 0.8705882352941177
+    "specificity": 0.8043478260869565,
+    "precision": 0.8457142857142858,
+    "f1": 0.8731563421828908
   },
-  "roc_auc_oof": 0.908271474019088,
+  "roc_auc_oof": 0.9091109932838458,
   "metrics_honest_check": {
     "sensitivity": 0.9024390243902439,
-    "specificity": 0.7971014492753623
+    "specificity": 0.8043478260869565
   },
   "cv_folds": [
     {
       "fold": 1,
-      "mean_test_f1": 0.8529553052930897
+      "mean_test_f1": 0.841495918707313
     },
     {
       "fold": 2,
-      "mean_test_f1": 0.8679775280898876
+      "mean_test_f1": 0.8497616615594143
     },
     {
       "fold": 3,
@@ -53,29 +53,29 @@
     },
     {
       "fold": 5,
-      "mean_test_f1": 0.8623856274627664
+      "mean_test_f1": 0.8622708740192552
     }
   ],
   "confusion_matrix": {
-    "tn": 110,
-    "fp": 28,
+    "tn": 111,
+    "fp": 27,
     "fn": 16,
     "tp": 148
   },
   "feature_importance": {
-    "age": 0.0018296084336762663,
-    "sex": 0.0010645529021450994,
-    "cp": 0.03185475537573339,
-    "trestbps": 0.004213935098123034,
-    "chol": 0.003929699824424493,
-    "fbs": 0.0,
-    "restecg": 0.006959120934335761,
-    "thalach": 0.024877222882682848,
-    "exang": 0.014401177324017545,
-    "oldpeak": 0.014204341384141683,
-    "slope": 0.0045402244887199576,
-    "ca": 0.04242928387432243,
-    "thal": 0.04343181072090498
+    "age": 0.005804286215180599,
+    "sex": 0.0001680769481035127,
+    "cp": 0.032370100864238124,
+    "trestbps": 0.003393605085788809,
+    "chol": 0.0016057468391149853,
+    "fbs": -0.0012896366037282725,
+    "restecg": 0.003179956697216102,
+    "thalach": 0.010326885927236984,
+    "exang": -0.0008653138684831974,
+    "oldpeak": 0.0018249952986958639,
+    "slope": 0.003169877111295449,
+    "ca": 0.04566880006994548,
+    "thal": 0.041385500411720066
   },
   "class_balance": {
     "0": 138,
@@ -85,5 +85,5 @@
     "f1": 0.881279876583678
   },
   "seed": 42,
-  "artifact_sha256": "de982ba3a628db4dd83230b4d3d0e9bf3c71396d7e13796c57c2401e2afc511a"
+  "artifact_sha256": "a055fc57934ac4967608ae136b8972b51efa10a563a817591c11e051ce52bf0c"
 }
