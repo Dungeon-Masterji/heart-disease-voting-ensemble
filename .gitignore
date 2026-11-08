@@ -7,12 +7,3 @@ __pycache__/
 *.pyc
 .DS_Store
 .env.local
-
-frontend/node_modules/
-frontend/dist/
-.venv/
-venv/
-__pycache__/
-*.pyc
-.DS_Store
-.env.local
