@@ -22,7 +22,9 @@ def variance_inflation_factors(X: pd.DataFrame) -> list[dict]:
     for index, feature in enumerate(CONTINUOUS_FEATURES):
         predictors = np.delete(centered, index, axis=1)
         predictors = np.column_stack((np.ones(len(values)), predictors))
-        coefficient, _, _, _ = np.linalg.lstsq(predictors, centered[:, index], rcond=None)
+        coefficient, _, _, _ = np.linalg.lstsq(
+            predictors, centered[:, index], rcond=None
+        )
         fitted = predictors @ coefficient
         residual_sum = float(np.sum((centered[:, index] - fitted) ** 2))
         total_sum = float(np.sum(centered[:, index] ** 2))
@@ -39,28 +41,34 @@ def feature_target_tests(df: pd.DataFrame) -> list[dict]:
         low = df.loc[target == 0, feature].dropna()
         high = df.loc[target == 1, feature].dropna()
         result = mannwhitneyu(low, high, alternative="two-sided")
-        rows.append({
-            "feature": feature,
-            "test": "Mann-Whitney U",
-            "statistic": float(result.statistic),
-            "p_value": float(result.pvalue),
-        })
+        rows.append(
+            {
+                "feature": feature,
+                "test": "Mann-Whitney U",
+                "statistic": float(result.statistic),
+                "p_value": float(result.pvalue),
+            }
+        )
     for feature in CATEGORICAL_FEATURES:
         contingency = pd.crosstab(df[feature], target)
         if contingency.shape[0] < 2 or contingency.shape[1] < 2:
             continue
         statistic, p_value, _, _ = chi2_contingency(contingency, correction=False)
-        rows.append({
-            "feature": feature,
-            "test": "chi-square",
-            "statistic": float(statistic),
-            "p_value": float(p_value),
-        })
+        rows.append(
+            {
+                "feature": feature,
+                "test": "chi-square",
+                "statistic": float(statistic),
+                "p_value": float(p_value),
+            }
+        )
     return rows
 
 
 def calibration_summary(y_true, probabilities, n_bins: int = 10) -> dict:
-    observed, predicted = calibration_curve(y_true, probabilities, n_bins=n_bins, strategy="quantile")
+    observed, predicted = calibration_curve(
+        y_true, probabilities, n_bins=n_bins, strategy="quantile"
+    )
     return {
         "brier_score": float(brier_score_loss(y_true, probabilities)),
         "curve": [
@@ -90,8 +98,10 @@ def subgroup_metrics(
         results[name] = {
             "count": count,
             "metrics": metric,
-            "caveat": "Small sample; descriptive only; not suitable for subgroup performance claims."
-            if count < 30
-            else "Descriptive only; association is not evidence of causal differences.",
+            "caveat": (
+                "Small sample; descriptive only; not suitable for subgroup performance claims."
+                if count < 30
+                else "Descriptive only; association is not evidence of causal differences."
+            ),
         }
     return results

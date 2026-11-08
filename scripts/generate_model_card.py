@@ -145,17 +145,17 @@ def build_card(meta: dict) -> str:
         calibration = analysis.get("calibration", {})
         a("\n## 10. Additional descriptive analysis\n")
         a(
-        f"- Soft-voting out-of-fold calibration Brier score: "
-        f"{fmt(calibration.get('brier_score'))}. Lower is better."
+            f"- Soft-voting out-of-fold calibration Brier score: "
+            f"{fmt(calibration.get('brier_score'))}. Lower is better."
         )
         a(
-        "- Continuous-feature variance inflation factors and target-association tests "
-        "are recorded under `training/artifacts/`. Association is descriptive, not causal."
+            "- Continuous-feature variance inflation factors and target-association tests "
+            "are recorded under `training/artifacts/`. Association is descriptive, not causal."
         )
         a(
-        "- Subgroup metrics at the chosen threshold are reported by sex and age band "
-        "in `training/artifacts/subgroup_metrics.json`; counts and small-sample caveats "
-        "are included. These results are not evidence of causal or generalizable subgroup differences."
+            "- Subgroup metrics at the chosen threshold are reported by sex and age band "
+            "in `training/artifacts/subgroup_metrics.json`; counts and small-sample caveats "
+            "are included. These results are not evidence of causal or generalizable subgroup differences."
         )
         if base and cv.get("f1") and abs(diff) <= cv["f1"][1]:
             a(
