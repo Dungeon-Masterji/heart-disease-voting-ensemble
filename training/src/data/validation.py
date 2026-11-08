@@ -67,7 +67,7 @@ def validate_dataset(df: pd.DataFrame) -> ValidationReport:
         if len(bad) > 0:
             out_of_range[col] = {
                 "documented_range": [spec.min_value, spec.max_value],
-                "n_out_of_range": int(len(bad)),
+                "n_out_of_range": len(bad),
                 "observed_bad_values": sorted(bad.unique().tolist()),
                 "row_indices": bad.index.tolist(),
             }
@@ -105,8 +105,12 @@ def save_report(report: ValidationReport, out_dir: str | Path) -> Path:
 def print_summary(report: ValidationReport) -> None:
     print(f"Rows x Cols: {report.n_rows} x {report.n_cols}")
     print(f"Total missing cells: {report.total_missing_cells}")
-    print(f"Duplicate rows: {report.n_duplicate_rows} (indices: {report.duplicate_row_indices})")
-    print(f"Target class balance: {report.class_balance} (imbalance ratio: {report.imbalance_ratio})")
+    print(
+        f"Duplicate rows: {report.n_duplicate_rows} (indices: {report.duplicate_row_indices})"
+    )
+    print(
+        f"Target class balance: {report.class_balance} (imbalance ratio: {report.imbalance_ratio})"
+    )
     if report.out_of_range:
         print("Out-of-documented-range values found:")
         for col, info in report.out_of_range.items():
@@ -124,5 +128,7 @@ if __name__ == "__main__":
     frame = load_raw_dataset()
     rep = validate_dataset(frame)
     print_summary(rep)
-    saved_to = save_report(rep, Path(__file__).resolve().parents[3] / "training" / "artifacts")
+    saved_to = save_report(
+        rep, Path(__file__).resolve().parents[3] / "training" / "artifacts"
+    )
     print(f"\nFull report written to {saved_to}")

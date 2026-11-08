@@ -1,5 +1,3 @@
-
-
 from dataclasses import dataclass
 
 
@@ -27,8 +25,12 @@ FEATURE_SCHEMA: dict[str, FeatureRange] = {
     "exang": FeatureRange("int", 0, 1, "Exercise-induced angina (1=yes)"),
     "oldpeak": FeatureRange("float", 0.0, 7.0, "ST depression induced by exercise"),
     "slope": FeatureRange("int", 0, 2, "Slope of peak exercise ST segment (0-2)"),
-    "ca": FeatureRange("int", 0, 3, "Number of major vessels colored by fluoroscopy (0-3 documented)"),
-    "thal": FeatureRange("int", 1, 3, "Thalassemia code (1-3 documented in this recoding)"),
+    "ca": FeatureRange(
+        "int", 0, 3, "Number of major vessels colored by fluoroscopy (0-3 documented)"
+    ),
+    "thal": FeatureRange(
+        "int", 1, 3, "Thalassemia code (1-3 documented in this recoding)"
+    ),
     "target": FeatureRange("int", 0, 1, "1 = heart disease present, 0 = absent"),
 }
 

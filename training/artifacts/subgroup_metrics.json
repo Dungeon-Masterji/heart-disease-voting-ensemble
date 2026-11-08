@@ -1,0 +1,53 @@
+{
+  "count":{
+    "sex=0":96,
+    "sex=1":206,
+    "age=<50":87,
+    "age=50-59":125,
+    "age=60+":90
+  },
+  "metrics":{
+    "sex=0":{
+      "threshold":0.5000575873,
+      "sensitivity":0.9861111111,
+      "specificity":0.75,
+      "precision":0.9220779221,
+      "f1":0.9530201342
+    },
+    "sex=1":{
+      "threshold":0.5000575873,
+      "sensitivity":0.8369565217,
+      "specificity":0.8070175439,
+      "precision":0.7777777778,
+      "f1":0.8062827225
+    },
+    "age=<50":{
+      "threshold":0.5000575873,
+      "sensitivity":0.9672131148,
+      "specificity":0.6538461538,
+      "precision":0.8676470588,
+      "f1":0.9147286822
+    },
+    "age=50-59":{
+      "threshold":0.5000575873,
+      "sensitivity":0.8769230769,
+      "specificity":0.8,
+      "precision":0.8260869565,
+      "f1":0.8507462687
+    },
+    "age=60+":{
+      "threshold":0.5000575873,
+      "sensitivity":0.8421052632,
+      "specificity":0.8653846154,
+      "precision":0.8205128205,
+      "f1":0.8311688312
+    }
+  },
+  "caveat":{
+    "sex=0":"Descriptive only; association is not evidence of causal differences.",
+    "sex=1":"Descriptive only; association is not evidence of causal differences.",
+    "age=<50":"Descriptive only; association is not evidence of causal differences.",
+    "age=50-59":"Descriptive only; association is not evidence of causal differences.",
+    "age=60+":"Descriptive only; association is not evidence of causal differences."
+  }
+}

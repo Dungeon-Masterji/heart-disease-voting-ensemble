@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  quality-and-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -r training/requirements.txt -r backend/requirements-dev.txt -r requirements-quality.txt
+      - run: python scripts/download_data.py
+      - run: |
+          python - <<'PY'
+          import csv
+          from pathlib import Path
+          path = Path("data/raw/heart_disease.csv")
+          with path.open(newline="", encoding="utf-8-sig") as handle:
+              rows = list(csv.reader(handle))
+          assert rows[0][0] == "age", rows[0]
+          assert len(rows) == 304, len(rows)
+          print("validated header and 303 data rows")
+          PY
+      - run: ruff check scripts training/src backend/app
+      - run: black --check scripts training/src backend/app
+      - run: mypy scripts training/src backend/app
+      - run: bandit -q -r scripts training/src backend/app
+      - run: pip-audit -r training/requirements.txt -r backend/requirements.txt
+      - run: python -m pytest training/tests -v
+      - run: cd backend && python -m pytest -v

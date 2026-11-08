@@ -1,0 +1,11 @@
+# Serving dependencies. scikit-learn MUST match the version that trained the
+# model (pickles are not portable across versions). Check yours with:
+#   pip freeze | grep -iE "scikit-learn|numpy|pandas|scipy|joblib"
+# and pin numpy/pandas/scipy/joblib to those exact versions before deploying.
+fastapi>=0.115
+uvicorn>=0.30
+pydantic>=2.7
+scikit-learn==1.9.1
+joblib>=1.4
+numpy>=2.1
+pandas>=2.2.3
