@@ -1,131 +1,250 @@
 # HeartGuard AI — Multi-Model Diagnosis Support Tool
 
-A 12-week student project building a voting-ensemble clinical
-decision-support prototype on the UCI Heart Disease (Cleveland) dataset.
-The repository contains the training pipeline, FastAPI backend, React frontend,
-Docker runtime, tests, analysis artifacts, and model card. See
-[`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md) for commands that were
-actually run and features that remain unverified.
+A clinical decision-support prototype built around a voting-ensemble classifier for the UCI Heart Disease dataset. The project follows the PRD for a 12-week advanced data science exercise and delivers the end-to-end workflow from data validation and EDA through model training, threshold selection, API serving, and a minimal React frontend.
 
-## ⚠️ Disclaimer
+## Live demo
 
-Educational prototype only. Not a medical device, not validated for
-clinical use, and (once a model exists) any prediction will be an advisory
-risk signal, not a diagnosis, requiring review by a qualified medical
-professional.
+- Deployed app: [HeartDisease Voting Ensemble](https://heart-disease-voting-ensemble.vercel.app/)
+
+## Project status
+
+This repository is complete for the implemented scope only. The features below are the ones actually reflected in the current code and artifacts:
+
+- Data ingestion and schema validation
+- Exploratory data analysis and dataset diagnostics
+- Leakage-safe preprocessing and baseline models
+- Voting classifier training with hard/soft voting strategies
+- Nested cross-validation tuning and threshold selection
+- Model evaluation with sensitivity, specificity, precision, F1, and ROC AUC
+- FastAPI backend for scoring and metadata
+- React frontend for clinician-facing risk input and output
+- Dockerized backend runtime and project documentation
+- Model card and project status documentation
+
+The exact verified status and commands used are documented in [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md).
 
 ## Problem statement
 
-Clinical teams need a repeatable, data-driven signal to help prioritize
-patients with elevated estimated heart-disease risk, for human-in-the-loop
-diagnostic workflows — not to replace clinical judgment.
+Clinical teams need a repeatable, data-driven signal to help prioritize patients with elevated heart-disease risk. This prototype is designed to support physician review and specialist triage, not to replace clinical judgment or act as an autonomous diagnosis system.
 
-## Implemented
+## Product boundary
 
-- **Data ingestion** (`training/src/data/ingestion.py`) — loads the raw CSV
-  and enforces the documented column schema.
-- **Data validation** (`training/src/data/validation.py`) — checks
-  missingness, duplicates, dtypes, and out-of-documented-range values;
-  writes a JSON report.
-- **EDA** (`training/src/eda/run_eda.py`) — target distribution,
-  feature distributions, correlation heatmap, missingness heatmap,
-  target-grouped boxplots, and a written findings summary.
-- **Tests** (`training/tests/test_data.py`) — 10 passing tests covering
-  ingestion and validation against the real 303-row dataset.
+This is an educational prototype for decision support and model-development practice. It is not a medical device and not validated for clinical deployment.
 
-Real findings from this dataset (not placeholders) are documented in
-[`training/artifacts/eda/eda_summary.md`](training/artifacts/eda/eda_summary.md)
-and [`docs/DATA_DICTIONARY.md`](docs/DATA_DICTIONARY.md) — for example: a
-1.2:1 class balance, 1 duplicate row, and 7 rows with out-of-documented-range
-`ca`/`thal` codes likely corresponding to the original dataset's missing
-values.
+## Dataset and modeling context
 
-## Known gaps
+- Dataset: UCI Heart Disease (Cleveland subset)
+- Objective: binary classification for risk flagging
+- Validation strategy: stratified 5-fold cross-validation
+- Modeling approach: ensemble voting classifier with leakage-safe preprocessing
+- Output: risk probability and operating threshold for high-risk flagging
 
-Authentication, live deployment, deploy workflow, drift monitoring, distributed
-rate limiting, and batch scoring are not implemented. These are documented,
-not implied by this README.
+## Model summary
+
+The current model artifact is version `m1.0.0` and was selected using a nested-CV workflow with a probability threshold chosen by the rule: maximize specificity while keeping sensitivity at or above 0.90 on out-of-fold predictions.
+
+| Metric | Value |
+|---|---:|
+| Threshold | 0.5000575873252479 |
+| Sensitivity | 0.902 |
+| Specificity | 0.797 |
+| Precision | 0.841 |
+| F1-score | 0.871 |
+| ROC AUC | 0.908 |
+
+The artifact and associated metadata are stored in `training/artifacts/models/` and summarized in [`docs/MODEL_CARD.md`](docs/MODEL_CARD.md).
+
+## Model-produced visuals and what they represent
+
+The project generates several figures during data exploration and evaluation. These images help explain the dataset and model behavior without claiming clinical certainty.
+
+### 1. Target distribution
+
+![Target distribution](training/artifacts/eda/target_distribution.png)
+
+This plot shows whether the dataset is balanced or skewed between the disease and non-disease classes. In this project, the target is close to balanced, which matters because it supports more reliable threshold and metric interpretation during cross-validation.
+
+### 2. Feature distributions
+
+![Continuous feature distributions](training/artifacts/eda/continuous_distributions.png)
+
+This image summarizes the spread of the continuous clinical variables, such as age, blood pressure, cholesterol, and exercise-induced angina-related measures. It highlights how the inputs vary and where values are concentrated or unusually extreme.
+
+### 3. Correlation heatmap
+
+![Correlation heatmap](training/artifacts/eda/correlation_heatmap.png)
+
+This heatmap shows how strongly features relate to each other and to the target. It helps identify which variables are most associated with the outcome, such as exercise-induced angina and chest pain type, while keeping in mind that correlation does not establish causation.
+
+### 4. Missingness and data quality heatmap
+
+![Missingness heatmap](training/artifacts/eda/missingness_heatmap.png)
+
+This plot highlights missing or out-of-range coded values. In this dataset, it is especially useful for identifying the recoded missing values in fields such as `ca` and `thal`, which were treated as data-quality issues rather than silently ignored.
+
+### 5. Evaluation curves
+
+![Model evaluation curves](training/artifacts/eval_curves.png)
+
+This figure summarizes model discrimination and calibration behavior during evaluation. It is used to inspect how well the classifier separates positive and negative cases across threshold settings and to understand predictive confidence.
+
+## What is implemented
+
+### Training and analysis
+
+- Data loading and validation: `training/src/data/`
+- EDA and dataset diagnostics: `training/src/eda/`
+- Leakage-safe preprocessing: `training/src/features/`
+- Baseline and ensemble models: `training/src/models/`
+- Cross-validation, tuning, threshold sweeps, and evaluation artifacts: `training/artifacts/`
+
+### Backend
+
+- FastAPI service: `backend/app/`
+- API routes for health, model metadata, scoring, and model card
+- Request validation and rate limiting
+- Model loading on app startup with versioned metadata checks
+
+### Frontend
+
+- React + TypeScript + Vite application: `frontend/`
+- Single-page dashboard for patient input and risk result display
+
+### Documentation
+
+- Data dictionary: [`docs/DATA_DICTIONARY.md`](docs/DATA_DICTIONARY.md)
+- Project status: [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md)
+- Model card: [`docs/MODEL_CARD.md`](docs/MODEL_CARD.md)
+- ADRs: [`docs/adr/`](docs/adr/)
 
 ## Repository structure
 
-```
+```text
 heart-disease-voting-ensemble/
-├── docs/
-│   ├── DATA_DICTIONARY.md      # dataset provenance, schema, known issues
-│   ├── PROJECT_STATUS.md       # done vs. planned, mapped to the PRD
-│   └── adr/                    # architecture decision records made so far
+├── backend/
+│   ├── app/
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   └── requirements-dev.txt
 ├── data/
-│   ├── raw/                    # fetched via scripts/download_data.py (gitignored)
-│   └── processed/              # reserved for Week 4 (gitignored)
-├── training/
+│   ├── processed/
+│   └── raw/
+├── docs/
+│   ├── adr/
+│   ├── DATA_DICTIONARY.md
+│   ├── MODEL_CARD.md
+│   └── PROJECT_STATUS.md
+├── frontend/
 │   ├── src/
-│   │   ├── data/                # schema.py, ingestion.py, validation.py
-│   │   └── eda/                 # run_eda.py
-│   ├── tests/                   # test_data.py
-│   ├── artifacts/eda/           # generated plots + eda_summary.md
-│   └── requirements.txt
+│   ├── index.html
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── vite.config.ts
 ├── scripts/
-│   └── download_data.py
+│   ├── download_data.py
+│   └── generate_model_card.py
+├── training/
+│   ├── artifacts/
+│   ├── src/
+│   ├── tests/
+│   └── requirements.txt
 ├── LICENSE
-└── README.md
+├── README.md
+├── pyproject.toml
+├── requirements-quality.txt
+└── .gitignore
 ```
 
-## Getting started
+## Quick start
 
 ### Prerequisites
-- Python 3.11+
 
-### 1. Set up the environment
+- Python 3.11+
+- Node.js 18+ for frontend development
+
+### 1. Set up the Python environment
+
 ```bash
-python -m venv venv && source venv/bin/activate
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r training/requirements.txt
 ```
 
-### 2. Get the dataset
+### 2. Download the dataset
+
 ```bash
 python scripts/download_data.py
 ```
-This fetches a 303-row, 14-column recoded CSV of the UCI Cleveland Heart
-Disease data. See `docs/DATA_DICTIONARY.md` for exactly what "recoded"
-means and why.
 
-### 3. Run ingestion, validation, and EDA
+### 3. Run training and validation steps
+
 ```bash
 python -m training.src.data.ingestion
 python -m training.src.data.validation
 python -m training.src.eda.run_eda
+python -m training.src.models.train --quick
 ```
-Validation prints a summary and writes `training/artifacts/validation_report.json`.
-EDA writes plots and `eda_summary.md` to `training/artifacts/eda/`.
 
-### 4. Run the tests
+The training run produces evaluation artifacts and model metadata under `training/artifacts/`.
+
+### 4. Run the backend
+
 ```bash
-pytest training/tests/ -v
+cd backend
+pip install -r requirements.txt
+uvicorn app.main:app --reload
 ```
 
-## Tech stack
+API docs are available at `http://localhost:8000/docs`.
 
-| Layer | Technologies |
-|---|---|
-| Data / EDA / training | Python 3.13, pandas, NumPy, SciPy, scikit-learn |
-| API | FastAPI, Python 3.13 |
-| Frontend | React, TypeScript, Vite |
-| Testing / quality | pytest, Vitest, Ruff, Black, mypy, Bandit |
+### 5. Run the frontend
 
-## Roadmap
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-| Phase | Weeks | Status |
-|---|---|---|
-| Research and requirements | 1–2 | Implemented/documented |
-| Data and EDA | 3 | Implemented and tested |
-| Features | 4 | Implemented and tested |
-| Baseline | 5 | Implemented |
-| Ensemble and tuning | 6–7 | Implemented and trained |
-| Evaluation | 8 | Implemented and trained |
-| API (FastAPI) | 9 | Implemented |
-| Frontend (React) | 10 | Implemented |
-| Integration and Docker | 11 | Implemented |
-| Finalization and model card | 12 | Implemented |
+## Tests
+
+Python tests are organized under `training/tests/` and backend tests under `backend/tests/`.
+
+```bash
+pytest training/tests -q
+```
+
+Frontend tests can be run with:
+
+```bash
+cd frontend
+npm test
+```
+
+## Limitations and ethics
+
+- This dataset reflects a single historical population and is not representative of all patient groups.
+- The project is a prototype for research and learning, not a production clinical deployment.
+- Model outputs are advisory signals only and must be reviewed by a qualified clinician.
+- Calibration, drift monitoring, deployment workflow, and live operational monitoring are not part of the current production-ready scope.
+
+## Ideal ML model README structure
+
+A strong machine learning repository README should include the sections below. This project follows that model closely:
+
+1. Problem and business context
+2. Dataset and data provenance
+3. Modeling objective and target definition
+4. Solution overview and architecture
+5. Training workflow and validation strategy
+6. Model performance and threshold rationale
+7. Limitations, ethical considerations, and risks
+8. Setup and reproduction instructions
+9. API or deployment details if applicable
+10. Model card or governance documentation
+11. Repository structure and ownership
+12. Clear statement of what is complete vs. what is planned
+
+A high-quality model README should be honest about what was measured, what remains unvalidated, and where the model is safe to use and where it is not.
 
 ## License
 
