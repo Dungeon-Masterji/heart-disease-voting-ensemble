@@ -3,21 +3,21 @@
 Dataset: 303 rows x 14 columns (see docs/DATA_DICTIONARY.md for full column provenance).
 
 ## Target distribution
-- Class 0 (absence): 138
-- Class 1 (presence): 165
+- Class 0 (absence): 165
+- Class 1 (presence): 138
 - Imbalance ratio: 1.2:1 — mild imbalance, not severe. Stratified k-fold CV (planned for Week 6+) is still warranted.
 
 ## Missingness
 - Total missing cells (NaN): 0.
-- No NaNs are present in this CSV variant, but validation.py flags 5 rows where `ca`=4 and 2 rows where `thal`=0 — both outside the documented coding range for this dataset variant. These almost certainly correspond to the 6 originally-missing values in the raw UCI Cleveland file (marked `?`) that were coerced to an out-of-range integer by whichever preprocessing produced this CSV, rather than true clinical measurements. This is flagged, not silently dropped — the imputation/exclusion decision belongs to Week 4 feature engineering, not to EDA.
+- No NaNs are present in this CSV variant, but validation.py flags 5 rows where `ca`=4 and 2 rows where `thal`=0 — both outside the documented coding range for this dataset variant. Row matching against the raw UCI Cleveland file confirms these are its missing values (marked `?`; 4 `ca` and 2 `thal`, plus one duplicated row), not true clinical measurements. This is flagged, not silently dropped — the imputation/exclusion decision belongs to Week 4 feature engineering, not to EDA.
 
 ## Duplicates
 - 1 exact duplicate row pair detected (patients at index 163/164 — identical across all 14 columns). Documented as a known artifact of this widely-circulated CSV variant; to be resolved during Week 4 preprocessing (drop or keep-with-justification), not silently here.
 
 ## Correlation with target (top 3 by |r|)
-- `exang`: r = -0.437
-- `cp`: r = 0.434
-- `oldpeak`: r = -0.431
+- `exang`: r = 0.437
+- `cp`: r = -0.434
+- `oldpeak`: r = 0.431
 
 *Correlation does not imply causality — this is descriptive EDA only, consistent with the PRD's caution in section 10.3.*
 

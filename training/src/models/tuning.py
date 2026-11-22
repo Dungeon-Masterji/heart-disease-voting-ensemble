@@ -24,13 +24,13 @@ PARAM_DIST = {
 }
 
 
-def nested_soft_cv(X, y, seed=42, n_iter=20, quick=False):
+def nested_soft_cv(X, y, seed=42, n_iter=20, quick=False, exclude=()):
     outer = StratifiedKFold(5, shuffle=True, random_state=seed)
     rows = []
     inner = StratifiedKFold(3, shuffle=True, random_state=seed)
     for fold, (train_idx, test_idx) in enumerate(outer.split(X, y), 1):
         search = RandomizedSearchCV(
-            make_tuning_pipeline(seed),
+            make_tuning_pipeline(seed, exclude),
             PARAM_DIST,
             n_iter=2 if quick else n_iter,
             scoring="f1",
@@ -46,9 +46,9 @@ def nested_soft_cv(X, y, seed=42, n_iter=20, quick=False):
     return rows
 
 
-def final_soft_search(X, y, seed=42, n_iter=40, quick=False):
+def final_soft_search(X, y, seed=42, n_iter=40, quick=False, exclude=()):
     search = RandomizedSearchCV(
-        make_tuning_pipeline(seed),
+        make_tuning_pipeline(seed, exclude),
         PARAM_DIST,
         n_iter=2 if quick else n_iter,
         scoring="f1",

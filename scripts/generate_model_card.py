@@ -1,7 +1,7 @@
 """Generate docs/MODEL_CARD.md from the saved model metadata (PRD section 21).
 
-Every number in the card comes from training/artifacts/models/model_m1.0.0.json,
-so the card cannot drift from the model it describes.
+Every number in the card comes from training/artifacts/models/model_m2.0.0.json
+and training/artifacts/external_validation.json, so the card cannot drift from the model.
 
 Usage:  python scripts/generate_model_card.py [path/to/model_meta.json]
 """
@@ -13,8 +13,11 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
-DEFAULT_META = REPO / "training" / "artifacts" / "models" / "model_m1.0.0.json"
+DEFAULT_META = REPO / "training" / "artifacts" / "models" / "model_m2.0.0.json"
+EXTERNAL = REPO / "training" / "artifacts" / "external_validation.json"
 OUT = REPO / "docs" / "MODEL_CARD.md"
+NOSCAN_META = DEFAULT_META.with_name("model_m2.0.0-noscan.json")
+NOSCAN_EXTERNAL = EXTERNAL.parent / "noscan" / "external_validation.json"
 METRICS = ("sensitivity", "specificity", "f1", "roc_auc")
 
 
@@ -39,7 +42,7 @@ def fold_stats(folds):
     return out
 
 
-def build_card(meta: dict) -> str:
+def build_card(meta: dict, external: dict | None = None) -> str:
     m = meta.get("metrics_at_threshold_oof", {})
     hc = meta.get("metrics_honest_check") or {}
     cm = meta.get("confusion_matrix")
@@ -59,6 +62,7 @@ def build_card(meta: dict) -> str:
     a("## 1. Model details\n")
     a("| Field | Value |\n|---|---|")
     a(f"| Version | {meta.get('model_version')} |")
+    a(f"| Label | {meta.get('label_definition')} |")
     a("| Type | Supervised binary classification ensemble |")
     a(
         "| Implementation | scikit-learn `VotingClassifier` inside a `Pipeline` with leakage-safe preprocessing |"
@@ -88,6 +92,10 @@ def build_card(meta: dict) -> str:
     a("- Autonomous diagnosis or any real clinical decision.")
     a("- Any regulatory claim: no FDA, CE or other approval exists.")
     a("- Populations, geographies or time periods different from the training data.")
+    a(
+        "- Model m1.0.0, which was trained on an inverted label and must not be used "
+        "(`docs/adr/ADR-006-target-label-inversion.md`). The API refuses to load it."
+    )
     a(
         "- Emergency or real-time critical-care decisions (latency and reliability not validated).\n"
     )
@@ -122,28 +130,53 @@ def build_card(meta: dict) -> str:
     a(f"| ROC AUC | {fmt(meta.get('roc_auc_oof'))} |")
     if hc:
         a(
-            f"\nHonest check (threshold re-chosen inside each fold, never on the fold being scored): "
-            f"sensitivity {fmt(hc.get('sensitivity'))}, specificity {fmt(hc.get('specificity'))}."
+            f"\n**Honest check** (threshold chosen without the fold being scored; the figure to expect on "
+            f"new patients from this population): sensitivity {fmt(hc.get('sensitivity'))}, "
+            f"specificity {fmt(hc.get('specificity'))}, F1 {fmt(hc.get('f1'))}. The table above is "
+            "optimistic because its threshold was chosen on the same predictions."
         )
     if cm:
         a("\n| | Predicted Low | Predicted High |\n|---|---|---|")
         a(f"| **Actually no disease** | TN = {cm['tn']} | FP = {cm['fp']} |")
         a(f"| **Actually disease** | FN = {cm['fn']} | TP = {cm['tp']} |")
     if cv:
-        a("\nNested CV at threshold 0.5, mean (std) across 5 folds:\n")
+        a("\nNested CV at the operating threshold, mean (std) across 5 folds:\n")
         a("| Metric | Mean | Std |\n|---|---|---|")
         for k, (mu, sd) in cv.items():
             a(f"| {k} | {fmt(mu)} | {fmt(sd)} |")
-    if base and cv.get("f1"):
-        diff = cv["f1"][0] - base.get("f1", float("nan"))
+    if base and hc.get("f1") is not None:
         a(
-            f"\n**Baseline comparison.** Plain logistic regression under the same CV scored F1 {fmt(base.get('f1'))}, "
-            f"sensitivity {fmt(base.get('sensitivity'))}, ROC AUC {fmt(base.get('roc_auc'))}. "
-            f"The tuned ensemble's F1 differs by {diff:+.3f}."
+            f"\n**Baseline comparison** (same folds, same threshold rule). Logistic regression: "
+            f"ROC AUC {fmt(base.get('roc_auc'))}, sensitivity {fmt(base.get('sensitivity'))}, "
+            f"specificity {fmt(base.get('specificity'))}, F1 {fmt(base.get('f1'))}. "
+            f"Voting ensemble: ROC AUC {fmt(hc.get('roc_auc'))}, sensitivity {fmt(hc.get('sensitivity'))}, "
+            f"specificity {fmt(hc.get('specificity'))}, F1 {fmt(hc.get('f1'))}. The ensemble is **not "
+            "demonstrably better** than the baseline; it is kept as a project requirement."
+        )
+    if external and external.get("artifact_sha256") == meta.get("artifact_sha256"):
+        a("\n### External validation (hospitals never used for training)\n")
+        a(
+            "| Site | n (disease / healthy) | ROC AUC (95% CI) | Sensitivity | Specificity | Brier |"
+            "\n|---|---|---|---|---|---|"
+        )
+        for site in external["sites"].values():
+            low, high = site["roc_auc_ci95"]
+            a(
+                f"| {site['name']} | {site['n']} ({site['n_disease']} / {site['n_healthy']}) | "
+                f"{fmt(site['roc_auc'])} ({fmt(low)}-{fmt(high)}) | {fmt(site['sensitivity'])} | "
+                f"{fmt(site['specificity'])} | {fmt(site['brier_score'])} |"
+            )
+        a(
+            "\nPublished model and threshold, nothing refitted. `ca` and `thal` are missing for most of "
+            "these patients and are imputed, so this tests the model with degraded inputs. Switzerland "
+            "has too few healthy patients to be conclusive. The sensitivity target of 0.90 is not met "
+            "at these sites."
+            if all(x["sensitivity"] < 0.90 for x in external["sites"].values())
+            else "\nPublished model and threshold, nothing refitted."
         )
     if analysis:
         calibration = analysis.get("calibration", {})
-        a("\n## 10. Additional descriptive analysis\n")
+        a("\n### Additional descriptive analysis\n")
         a(
             f"- Soft-voting out-of-fold calibration Brier score: "
             f"{fmt(calibration.get('brier_score'))}. Lower is better."
@@ -157,14 +190,9 @@ def build_card(meta: dict) -> str:
             "in `training/artifacts/subgroup_metrics.json`; counts and small-sample caveats "
             "are included. These results are not evidence of causal or generalizable subgroup differences."
         )
-        if base and cv.get("f1") and abs(diff) <= cv["f1"][1]:
-            a(
-                "That difference is smaller than the fold-to-fold standard deviation, so on this dataset the ensemble "
-                "is **not demonstrably better** than the simple baseline."
-            )
     a("\n## 7. Ethical considerations and limitations\n")
     a(
-        "- **Population bias:** single hospital, 1980s data, ~300 patients; subgroup coverage is limited and "
+        "- **Population bias:** trained on a single hospital, 1980s data, ~300 patients; subgroup coverage is limited and "
         "descriptive subgroup estimates can be unstable in small groups."
     )
     a("- **Historical bias:** labels reflect the diagnostic practice of the era.")
@@ -194,14 +222,72 @@ def build_card(meta: dict) -> str:
     return "\n".join(L)
 
 
+def build_noscan_section(
+    meta: dict, external: dict | None, full_external: dict | None
+) -> str:
+    hc = meta["metrics_honest_check"]
+    base = meta["baseline_logreg_cv"]
+    blank = meta["full_model_with_tests_blanked"]
+    own = meta["metrics_at_threshold_oof"]
+    lines = [
+        "## 10. Second model: patients without `ca` and/or `thal`\n",
+        f"Version **{meta['model_version']}**, threshold **{meta['threshold']}**, SHA-256 "
+        f"`{meta['artifact_sha256']}`. Same voting ensemble, search space, patients and threshold rule, "
+        "trained without the two scan features. The API uses it whenever either scan is missing "
+        "and ignores the other one. Rationale: `docs/adr/ADR-007-no-scan-model.md`.\n",
+        "| Cleveland, held-out folds | ROC AUC | Sensitivity | Specificity |\n|---|---|---|---|",
+        f"| This model (honest check) | {fmt(hc['roc_auc'])} | {fmt(hc['sensitivity'])} | {fmt(hc['specificity'])} |",
+        f"| This model (out-of-fold, chosen threshold) | {fmt(meta['roc_auc_oof'])} | {fmt(own['sensitivity'])} | {fmt(own['specificity'])} |",
+        *(
+            f"| Full model, {label} blanked and imputed | {fmt(b['roc_auc'])} | {fmt(b['sensitivity'])} | {fmt(b['specificity'])} |"
+            for label, b in (
+                ("`ca`", blank["ca"]),
+                ("`thal`", blank["thal"]),
+                ("both scans", blank["both"]),
+            )
+        ),
+        f"| Logistic regression without scans (honest check) | {fmt(base['roc_auc'])} | {fmt(base['sensitivity'])} | {fmt(base['specificity'])} |",
+    ]
+    if external and external["artifact_sha256"] == meta["artifact_sha256"]:
+        lines.append(
+            "\n| External site | ROC AUC (95% CI) | Sensitivity | Specificity | Full model AUC / sens / spec |"
+            "\n|---|---|---|---|---|"
+        )
+        for key, site in external["sites"].items():
+            low, high = site["roc_auc_ci95"]
+            other = (full_external or {}).get("sites", {}).get(key, {})
+            lines.append(
+                f"| {site['name']} | {fmt(site['roc_auc'])} ({fmt(low)}-{fmt(high)}) | "
+                f"{fmt(site['sensitivity'])} | {fmt(site['specificity'])} | {fmt(other.get('roc_auc'))} / "
+                f"{fmt(other.get('sensitivity'))} / {fmt(other.get('specificity'))} |"
+            )
+        lines.append(
+            "\nHigher sensitivity comes with lower specificity: ranking (AUC) improves only slightly. "
+            "Other missing values at these sites are still imputed, whereas the API rejects them. VA and "
+            "Hungary results were seen during development, so treat them as reference, not a blind test."
+        )
+    return "\n".join(lines) + "\n"
+
+
 def main() -> None:
     meta_path = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_META
     if not meta_path.exists():
         sys.exit(
-            f"Metadata not found: {meta_path}\nRun notebook cells 8g and 8h first."
+            f"Metadata not found: {meta_path}\nRun `python -m training.src.models.train` first."
         )
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(build_card(json.loads(meta_path.read_text())), encoding="utf-8")
+    external = json.loads(EXTERNAL.read_text()) if EXTERNAL.exists() else None
+    card = build_card(json.loads(meta_path.read_text()), external)
+    if len(sys.argv) == 1 and NOSCAN_META.exists():
+        noscan_external = (
+            json.loads(NOSCAN_EXTERNAL.read_text())
+            if NOSCAN_EXTERNAL.exists()
+            else None
+        )
+        card += "\n" + build_noscan_section(
+            json.loads(NOSCAN_META.read_text()), noscan_external, external
+        )
+    OUT.write_text(card, encoding="utf-8")
     print(f"Wrote {OUT}")
 
 

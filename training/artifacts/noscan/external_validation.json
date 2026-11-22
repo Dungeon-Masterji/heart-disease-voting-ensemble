@@ -1,0 +1,86 @@
+{
+  "model_version": "m2.0.0-noscan",
+  "artifact_sha256": "99e2e4089c8c43d03c92a3c90d23a46c9a5c164e24b3a398d4ca02ab5a49fe29",
+  "threshold": 0.25881272038388564,
+  "sites": {
+    "hungarian": {
+      "name": "Hungary (Budapest)",
+      "threshold": 0.25881272038388564,
+      "sensitivity": 0.9150943396226415,
+      "specificity": 0.6276595744680851,
+      "precision": 0.5808383233532934,
+      "f1": 0.7106227106227107,
+      "n": 294,
+      "n_disease": 106,
+      "n_healthy": 188,
+      "roc_auc": 0.8862404656764352,
+      "roc_auc_ci95": [
+        0.8433569279563679,
+        0.9232039847317771
+      ],
+      "brier_score": 0.12928913153928417,
+      "missing_fraction": {
+        "trestbps": 0.003,
+        "chol": 0.078,
+        "fbs": 0.027,
+        "restecg": 0.003,
+        "thalach": 0.003,
+        "exang": 0.003,
+        "slope": 0.646
+      }
+    },
+    "va": {
+      "name": "VA Long Beach",
+      "threshold": 0.25881272038388564,
+      "sensitivity": 0.9060402684563759,
+      "specificity": 0.3333333333333333,
+      "precision": 0.7988165680473372,
+      "f1": 0.8490566037735849,
+      "n": 200,
+      "n_disease": 149,
+      "n_healthy": 51,
+      "roc_auc": 0.7196999605211213,
+      "roc_auc_ci95": [
+        0.6369758388065025,
+        0.7971846361401156
+      ],
+      "brier_score": 0.18871816914389972,
+      "missing_fraction": {
+        "trestbps": 0.285,
+        "chol": 0.28,
+        "fbs": 0.035,
+        "thalach": 0.265,
+        "exang": 0.265,
+        "oldpeak": 0.28,
+        "slope": 0.51
+      }
+    },
+    "switzerland": {
+      "name": "Switzerland (Zurich/Basel)",
+      "threshold": 0.25881272038388564,
+      "sensitivity": 0.9478260869565217,
+      "specificity": 0.375,
+      "precision": 0.956140350877193,
+      "f1": 0.9519650655021834,
+      "n": 123,
+      "n_disease": 115,
+      "n_healthy": 8,
+      "roc_auc": 0.7663043478260869,
+      "roc_auc_ci95": [
+        0.6120614035087719,
+        0.9076354679802955
+      ],
+      "brier_score": 0.15419584241177642,
+      "missing_fraction": {
+        "trestbps": 0.016,
+        "chol": 1.0,
+        "fbs": 0.61,
+        "restecg": 0.008,
+        "thalach": 0.008,
+        "exang": 0.008,
+        "oldpeak": 0.049,
+        "slope": 0.138
+      }
+    }
+  }
+}

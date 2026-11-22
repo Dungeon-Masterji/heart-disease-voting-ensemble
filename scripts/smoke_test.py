@@ -59,6 +59,12 @@ def main() -> int:
     if status != 200 or score.get("risk_flag") not in ("High Risk", "Low Risk"):
         print("FAIL: scoring failed")
         return 1
+    incomplete = {k: v for k, v in SAMPLE.items() if k not in ("ca", "thal")}
+    status, score = call("/score", incomplete)
+    print("POST /score without ca/thal ->", status, score.get("model_version"))
+    if status != 200 or score.get("model_used") != "no_scan":
+        print("FAIL: scoring without scans failed")
+        return 1
     print("OK: smoke test passed")
     return 0
 

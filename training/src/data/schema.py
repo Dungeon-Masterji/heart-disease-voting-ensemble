@@ -16,20 +16,27 @@ class FeatureRange:
 FEATURE_SCHEMA: dict[str, FeatureRange] = {
     "age": FeatureRange("int", 0, 120, "Age in years"),
     "sex": FeatureRange("int", 0, 1, "1 = male, 0 = female"),
-    "cp": FeatureRange("int", 0, 3, "Chest pain type (0-3, dataset-observed encoding)"),
+    "cp": FeatureRange(
+        "int",
+        0,
+        3,
+        "Chest pain (0 asymptomatic, 1 atypical, 2 non-anginal, 3 typical angina)",
+    ),
     "trestbps": FeatureRange("int", 60, 260, "Resting blood pressure (mm Hg)"),
     "chol": FeatureRange("int", 50, 700, "Serum cholesterol (mg/dl)"),
     "fbs": FeatureRange("int", 0, 1, "Fasting blood sugar > 120 mg/dl (1=true)"),
-    "restecg": FeatureRange("int", 0, 2, "Resting ECG result (0-2)"),
+    "restecg": FeatureRange(
+        "int", 0, 2, "Resting ECG (0 LV hypertrophy, 1 normal, 2 ST-T abnormality)"
+    ),
     "thalach": FeatureRange("int", 60, 250, "Max heart rate achieved"),
     "exang": FeatureRange("int", 0, 1, "Exercise-induced angina (1=yes)"),
     "oldpeak": FeatureRange("float", 0.0, 7.0, "ST depression induced by exercise"),
-    "slope": FeatureRange("int", 0, 2, "Slope of peak exercise ST segment (0-2)"),
+    "slope": FeatureRange("int", 0, 2, "Peak exercise ST slope (0 down, 1 flat, 2 up)"),
     "ca": FeatureRange(
         "int", 0, 3, "Number of major vessels colored by fluoroscopy (0-3 documented)"
     ),
     "thal": FeatureRange(
-        "int", 1, 3, "Thalassemia code (1-3 documented in this recoding)"
+        "int", 1, 3, "Thallium scan (1 fixed defect, 2 normal, 3 reversible defect)"
     ),
     "target": FeatureRange("int", 0, 1, "1 = heart disease present, 0 = absent"),
 }

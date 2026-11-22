@@ -17,6 +17,7 @@ def health(request: Request):
         status="ok" if loaded else "unavailable",
         model_loaded=loaded,
         model_version=predictor.version if loaded else None,
+        noscan_model_loaded=request.app.state.noscan_predictor is not None,
         timestamp=datetime.now(UTC).isoformat(),
     )
     return JSONResponse(

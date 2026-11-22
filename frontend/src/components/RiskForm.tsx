@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import type { FieldError, PatientFeatures } from "../types";
-import { FIELDS, GROUPS, SAMPLE_PATIENT, toFeatures, validateField } from "../utils/validation";
+import { FIELDS, GROUPS, NOT_DONE, SAMPLE_PATIENT, toFeatures, validateField } from "../utils/validation";
 
 interface Props {
   onSubmit: (features: PatientFeatures) => void;
@@ -81,6 +81,7 @@ export default function RiskForm({ onSubmit, onReset, loading, serverErrors }: P
                       {spec.options?.map((o) => (
                         <option key={o.value} value={String(o.value)}>{o.label}</option>
                       ))}
+                      {spec.mayBeNotDone && <option value={NOT_DONE}>Test not done / unknown</option>}
                     </select>
                   ) : (
                     <input

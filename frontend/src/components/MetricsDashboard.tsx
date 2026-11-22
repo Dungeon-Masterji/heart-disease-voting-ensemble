@@ -40,8 +40,21 @@ export default function MetricsDashboard({ info }: { info: ModelInfo }) {
       {info.honest_check && (
         <p className="text-sm text-slate-800">
           Honest check (threshold chosen without seeing the scored fold): sensitivity{" "}
-          {pct(info.honest_check.sensitivity)}, specificity {pct(info.honest_check.specificity)}.
+          {pct(info.honest_check.sensitivity)}, specificity {pct(info.honest_check.specificity)}. Expect this on new patients,
+          rather than the headline figures.
         </p>
+      )}
+
+      {info.noscan_model && (
+        <section aria-label="Model without scans" className="rounded border border-slate-300 bg-white p-4 text-sm text-slate-800">
+          <h3 className="font-semibold text-slate-900">When ca or thal was not done</h3>
+          <p>
+            Model <strong>{info.noscan_model.model_version}</strong> is used instead (threshold{" "}
+            {info.noscan_model.threshold.toFixed(3)}). ROC AUC {pct(info.noscan_model.metrics.roc_auc)}; honest check:
+            sensitivity {pct(info.noscan_model.honest_check?.sensitivity)}, specificity{" "}
+            {pct(info.noscan_model.honest_check?.specificity)}.
+          </p>
+        </section>
       )}
 
       {cm && (
@@ -91,7 +104,7 @@ export default function MetricsDashboard({ info }: { info: ModelInfo }) {
 
       {cv && (
         <section aria-label="Cross-validation summary" className="overflow-x-auto">
-          <h3 className="mb-2 font-semibold text-slate-900">Nested cross-validation (5 folds, threshold 0.5)</h3>
+          <h3 className="mb-2 font-semibold text-slate-900">Nested cross-validation (5 folds, operating threshold)</h3>
           <table className="min-w-[28rem] border-collapse text-sm">
             <thead>
               <tr className="bg-slate-100 text-left">
@@ -119,7 +132,7 @@ export default function MetricsDashboard({ info }: { info: ModelInfo }) {
           </table>
           {info.baseline_logreg_cv && (
             <p className="mt-2 text-sm text-slate-800">
-              Baseline (plain logistic regression, same CV): F1 {pct(info.baseline_logreg_cv.f1)}, sensitivity{" "}
+              Baseline (plain logistic regression, same folds and threshold rule, compare with the honest check): F1 {pct(info.baseline_logreg_cv.f1)}, sensitivity{" "}
               {pct(info.baseline_logreg_cv.sensitivity)}, ROC AUC {pct(info.baseline_logreg_cv.roc_auc)}.
             </p>
           )}

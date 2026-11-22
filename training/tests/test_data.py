@@ -64,7 +64,7 @@ def test_validation_flags_out_of_range_ca_and_thal(raw_df):
 
 def test_validation_class_balance_matches_known_counts(raw_df):
     report = validate_dataset(raw_df)
-    assert report.class_balance == {"0": 138, "1": 165}
+    assert report.class_balance == {"0": 165, "1": 138}  # UCI: disease is the minority
     assert 1.0 < report.imbalance_ratio < 1.5
 
 

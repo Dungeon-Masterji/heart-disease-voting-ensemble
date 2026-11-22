@@ -44,6 +44,12 @@ export default function RiskResult({ result }: { result: ScoreResponse }) {
         </div>
       </div>
 
+      {result.notice && (
+        <p role="note" className="rounded border-2 border-amber-700 bg-amber-50 p-3 text-sm font-medium text-amber-950">
+          {result.notice} Not available: {result.missing_tests.join(", ")}.
+        </p>
+      )}
+
       <dl className="grid grid-cols-2 gap-2 text-sm text-slate-900 sm:grid-cols-4">
         <div><dt className="font-semibold">Model version</dt><dd>{result.model_version}</dd></div>
         <div><dt className="font-semibold">Voting</dt><dd>{result.voting_strategy}</dd></div>

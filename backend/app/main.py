@@ -33,6 +33,20 @@ if not access_logger.handlers:
     access_logger.propagate = False
 
 
+def load_or_none(model_path, meta_path) -> Predictor | None:
+    try:
+        predictor = Predictor.load(model_path, meta_path)
+    except ModelUnavailable as exc:
+        access_logger.error(
+            json.dumps({"event": "model_load_failed", "error": str(exc)})
+        )
+        return None
+    access_logger.info(
+        json.dumps({"event": "model_loaded", "model_version": predictor.version})
+    )
+    return predictor
+
+
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings.from_env()
     limiter = SlidingWindowLimiter(settings.rate_limit_per_minute)
@@ -40,23 +54,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         # Load once at startup -- never per request, never fit at serving time.
-        try:
-            app.state.predictor = Predictor.load(
-                settings.model_path, settings.meta_path
-            )
-            access_logger.info(
-                json.dumps(
-                    {
-                        "event": "model_loaded",
-                        "model_version": app.state.predictor.version,
-                    }
-                )
-            )
-        except ModelUnavailable as exc:
-            app.state.predictor = None
-            access_logger.error(
-                json.dumps({"event": "model_load_failed", "error": str(exc)})
-            )
+        app.state.predictor = load_or_none(settings.model_path, settings.meta_path)
+        app.state.noscan_predictor = load_or_none(
+            settings.noscan_model_path, settings.noscan_meta_path
+        )
         yield
 
     app = FastAPI(
@@ -67,6 +68,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.state.settings = settings
     app.state.predictor = None
+    app.state.noscan_predictor = None
 
     # ---- error handlers: one consistent body shape ----
     @app.exception_handler(ApiError)

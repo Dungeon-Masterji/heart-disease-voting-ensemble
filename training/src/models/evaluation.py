@@ -1,7 +1,17 @@
 import numpy as np
 import pandas as pd
-from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score
-from sklearn.model_selection import StratifiedKFold
+from sklearn.base import clone
+from sklearn.inspection import permutation_importance
+from sklearn.metrics import (
+    confusion_matrix,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
+from sklearn.model_selection import StratifiedKFold, cross_val_predict
+
+from training.src.models.threshold import select_threshold
 
 
 def metrics_at(y_true, y_pred, threshold=None):
@@ -33,43 +43,52 @@ def sweep_thresholds(y_true, probabilities, thresholds=None):
     return pd.DataFrame(rows)
 
 
-def honest_leave_one_fold_out_threshold(
-    model_factory, X, y, seed=42, target_sensitivity=0.90, inner_splits=5
-):
-    probabilities = np.zeros(len(y), dtype=float)
-    thresholds = []
-    cv = StratifiedKFold(5, shuffle=True, random_state=seed)
-    for train_idx, test_idx in cv.split(X, y):
-        folds = StratifiedKFold(inner_splits, shuffle=True, random_state=seed)
-        # Threshold selection uses only OOF predictions from the training fold.
-        train_probabilities = np.zeros(len(train_idx), dtype=float)
-        for inner_train, inner_test in folds.split(
-            X.iloc[train_idx], y.iloc[train_idx]
-        ):
-            inner_model = model_factory()
-            inner_model.fit(
-                X.iloc[train_idx[inner_train]], y.iloc[train_idx[inner_train]]
-            )
-            train_probabilities[inner_test] = inner_model.predict_proba(
-                X.iloc[train_idx[inner_test]]
-            )[:, 1]
-        fold_sweep = sweep_thresholds(y.iloc[train_idx], train_probabilities)
-        from training.src.models.threshold import select_threshold
+def honest_threshold_check(fold_models, X, y, cv, target_sensitivity=0.90, seed=42):
+    """Score each outer fold with a threshold chosen without that fold.
 
-        choice = select_threshold(fold_sweep, target_sensitivity)
+    For every outer fold the threshold comes from inner out-of-fold predictions
+    on the training part only, using that fold's model settings, and is applied
+    to the held-out part only. Nothing about the held-out fold is used.
+    """
+    y_values = np.asarray(y)
+    probabilities = np.zeros(len(y_values), dtype=float)
+    predictions = np.zeros(len(y_values), dtype=bool)
+    thresholds = []
+    for (train_idx, test_idx), fold_model in zip(cv.split(X, y), fold_models):
+        X_train, y_train = X.iloc[train_idx], y.iloc[train_idx]
+        inner = StratifiedKFold(5, shuffle=True, random_state=seed)
+        inner_probabilities = cross_val_predict(
+            clone(fold_model), X_train, y_train, cv=inner, method="predict_proba"
+        )[:, 1]
+        choice = select_threshold(
+            sweep_thresholds(y_train, inner_probabilities), target_sensitivity
+        )
         threshold = float(choice["threshold"]) if choice else 0.0
         thresholds.append(threshold)
-
-        model = model_factory()
-        model.fit(X.iloc[train_idx], y.iloc[train_idx])
+        model = clone(fold_model).fit(X_train, y_train)
         probabilities[test_idx] = model.predict_proba(X.iloc[test_idx])[:, 1]
-    overall_threshold = float(np.mean(thresholds))
-    predictions = probabilities >= overall_threshold
-    return {
-        "sensitivity": float(
-            recall_score(y, predictions, pos_label=1, zero_division=0)
-        ),
-        "specificity": float((~predictions[y.to_numpy() == 0]).mean()),
-        "thresholds_by_fold": thresholds,
-        "threshold": overall_threshold,
-    }
+        predictions[test_idx] = probabilities[test_idx] >= threshold
+    result = metrics_at(y_values, predictions)
+    result.pop("threshold")
+    result["roc_auc"] = float(roc_auc_score(y_values, probabilities))
+    result["thresholds_by_fold"] = thresholds
+    return result
+
+
+def held_out_permutation_importance(fold_models, X, y, cv, seed=42):
+    """Mean drop in ROC AUC when a feature is shuffled, on held-out folds only.
+
+    `fold_models` must be fitted on the matching training folds.
+    """
+    drops = [
+        permutation_importance(
+            model,
+            X.iloc[test_idx],
+            y.iloc[test_idx],
+            scoring="roc_auc",
+            n_repeats=10,
+            random_state=seed,
+        ).importances_mean
+        for (_, test_idx), model in zip(cv.split(X, y), fold_models)
+    ]
+    return {str(c): float(v) for c, v in zip(X.columns, np.mean(drops, axis=0))}
