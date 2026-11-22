@@ -41,16 +41,43 @@ This is an educational prototype for decision support and model-development prac
 
 ## Model summary
 
-The current model artifact is version `m1.0.0` and was selected using a nested-CV workflow with a probability threshold chosen by the rule: maximize specificity while keeping sensitivity at or above 0.90 on out-of-fold predictions.
+The current model artifact is version `m2.0.0`, selected with nested CV. The threshold (0.2668) maximizes specificity while keeping sensitivity at or above 0.90 on out-of-fold predictions.
 
-| Metric | Value |
-|---|---:|
-| Threshold | 0.5000575873252479 |
-| Sensitivity | 0.902 |
-| Specificity | 0.797 |
-| Precision | 0.841 |
-| F1-score | 0.871 |
-| ROC AUC | 0.908 |
+> **m1.0.0 is withdrawn.** It was trained on an inverted label and scored healthy patients as high risk. See [ADR-006](docs/adr/ADR-006-target-label-inversion.md).
+
+| Metric | Honest check (expect this) | Out-of-fold at chosen threshold | Logistic regression, honest check |
+|---|---:|---:|---:|
+| Sensitivity | 0.855 | 0.906 | 0.884 |
+| Specificity | 0.713 | 0.646 | 0.732 |
+| Precision | 0.715 | 0.683 | 0.735 |
+| F1-score | 0.779 | 0.779 | 0.803 |
+| ROC AUC | 0.908 | 0.908 | 0.914 |
+
+The honest check picks the threshold without the patients being scored; it falls short of the 0.90 sensitivity target. The ensemble does not beat logistic regression; it is kept as a project requirement.
+
+### External validation (hospitals never used for training)
+
+| Site | n | ROC AUC (95% CI) | Sensitivity | Specificity |
+|---|---:|---:|---:|---:|
+| Hungary (Budapest) | 294 | 0.882 (0.838-0.921) | 0.840 | 0.745 |
+| VA Long Beach | 200 | 0.707 (0.621-0.790) | 0.812 | 0.529 |
+| Switzerland (Zurich/Basel) | 123 | 0.767 (0.581-0.927) | 0.870 | 0.375 |
+
+`ca` and `thal` are missing for most external patients and are imputed. Switzerland has only 8 healthy patients, so its result is inconclusive.
+
+### Second model: patients without `ca` and/or `thal`
+
+When either scan is missing the API uses `m2.0.0-noscan`, the same voting ensemble trained on the other 11 features ([ADR-007](docs/adr/ADR-007-no-scan-model.md)). Filling a gap with "normal" values made the full model miss more patients, as the last three Cleveland rows show.
+
+| | ROC AUC | Sensitivity | Specificity |
+|---|---:|---:|---:|
+| Cleveland: `m2.0.0-noscan` (honest check) | 0.872 | 0.891 | 0.634 |
+| Cleveland: `m2.0.0` with `ca` blanked | 0.881 | 0.833 | 0.756 |
+| Cleveland: `m2.0.0` with `thal` blanked | 0.893 | 0.862 | 0.695 |
+| Cleveland: `m2.0.0` with both scans blanked | 0.857 | 0.710 | 0.817 |
+| Hungary (Budapest): `m2.0.0-noscan` | 0.886 | 0.915 | 0.628 |
+| VA Long Beach: `m2.0.0-noscan` | 0.720 | 0.906 | 0.333 |
+| Switzerland (Zurich/Basel): `m2.0.0-noscan` | 0.766 | 0.948 | 0.375 |
 
 The artifact and associated metadata are stored in `training/artifacts/models/` and summarized in [`docs/MODEL_CARD.md`](docs/MODEL_CARD.md).
 
@@ -142,6 +169,7 @@ heart-disease-voting-ensemble/
 │   └── vite.config.ts
 ├── scripts/
 │   ├── download_data.py
+│   ├── download_external_data.py
 │   └── generate_model_card.py
 ├── training/
 │   ├── artifacts/
@@ -182,8 +210,15 @@ python scripts/download_data.py
 python -m training.src.data.ingestion
 python -m training.src.data.validation
 python -m training.src.eda.run_eda
-python -m training.src.models.train --quick
+python -m training.src.models.train
+
+# Optional: score the trained model on unseen hospitals, then refresh the model card
+python scripts/download_external_data.py
+python -m training.src.models.external_validation
+python scripts/generate_model_card.py
 ```
+
+`train --quick` is a 2-iteration smoke run. It writes to `training/artifacts/quick/` and never replaces the published model.
 
 The training run produces evaluation artifacts and model metadata under `training/artifacts/`.
 
@@ -211,6 +246,7 @@ Python tests are organized under `training/tests/` and backend tests under `back
 
 ```bash
 pytest training/tests -q
+cd backend && pytest -q
 ```
 
 Frontend tests can be run with:

@@ -30,11 +30,12 @@ def make_training_frame(n: int = 200, seed: int = 0) -> pd.DataFrame:
     return df
 
 
-def build_artifact(directory: Path, tamper_meta: bool = False):
+def build_artifact(directory: Path, tamper_meta: bool = False, exclude: tuple = ()):
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
     X, y = load_xy(make_training_frame())
-    pipe = Pipeline([("prep", build_preprocessor()),
+    X = X.drop(columns=list(exclude))
+    pipe = Pipeline([("prep", build_preprocessor(exclude)),
                      ("clf", LogisticRegression(max_iter=1000, random_state=0))]).fit(X, y)
     model_path = directory / "model_test.joblib"
     meta_path = directory / "model_test.json"
@@ -42,7 +43,7 @@ def build_artifact(directory: Path, tamper_meta: bool = False):
     folds = [{"fold": i + 1, "sensitivity": 0.9 - 0.01 * i, "specificity": 0.8 + 0.01 * i,
               "f1": 0.85, "roc_auc": 0.9} for i in range(5)]
     meta = {
-        "model_version": "m-test", "voting_strategy": "soft", "threshold": THRESHOLD,
+        "model_version": "m-test" + ("-noscan" if exclude else ""), "features": list(X.columns), "label_definition": "1 = heart disease present (test)", "voting_strategy": "soft", "threshold": THRESHOLD,
         "threshold_rationale": "test rationale", "training_date": "2026-01-01",
         "n_training_rows": int(len(y)),
         "metrics_at_threshold_oof": {"sensitivity": 0.9, "specificity": 0.8, "precision": 0.85, "f1": 0.87},

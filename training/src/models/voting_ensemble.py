@@ -25,10 +25,10 @@ def build_voting(strategy: str = "soft", seed: int = 42) -> VotingClassifier:
     return VotingClassifier(base_estimators(seed), voting=strategy)
 
 
-def make_tuning_pipeline(seed: int = 42) -> Pipeline:
+def make_tuning_pipeline(seed: int = 42, exclude: tuple[str, ...] = ()) -> Pipeline:
     return Pipeline(
         [
-            ("prep", build_preprocessor()),
+            ("prep", build_preprocessor(exclude)),
             ("clf", build_voting("soft", seed)),
         ]
     )

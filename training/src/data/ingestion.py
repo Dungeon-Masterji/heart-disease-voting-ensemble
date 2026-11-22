@@ -3,8 +3,9 @@ Data ingestion (BR-001 / TR-001).
 
 Loads the raw heart-disease CSV from disk, applies the documented column
 schema, and returns a pandas DataFrame. Does NOT impute, scale, encode, or
-drop anything — ingestion is intentionally "dumb": it only parses. All
-cleaning decisions belong to validation.py (reporting) and, from Week 4
+drop anything. Its one correction is the target label, which is inverted in
+the raw CSV (see labels.py); always load data through this function, never with
+`pd.read_csv`, or the label will mean the opposite. All other cleaning decisions belong to validation.py (reporting) and, from Week 4
 onward, the leakage-safe preprocessing pipeline.
 """
 
@@ -15,6 +16,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from .labels import to_disease_label
 from .schema import ALL_COLUMNS
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -43,7 +45,7 @@ def load_raw_dataset(path: str | Path = DEFAULT_RAW_PATH) -> pd.DataFrame:
             f"Unexpected columns: {sorted(extra_cols)}."
         )
 
-    df = df[ALL_COLUMNS]
+    df = to_disease_label(df[ALL_COLUMNS])
     logger.info(
         "Loaded raw dataset: %s rows, %s columns from %s",
         df.shape[0],

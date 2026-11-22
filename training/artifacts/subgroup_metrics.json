@@ -8,39 +8,39 @@
   },
   "metrics":{
     "sex=0":{
-      "threshold":0.5000575873,
-      "sensitivity":0.9861111111,
-      "specificity":0.75,
-      "precision":0.9220779221,
-      "f1":0.9530201342
+      "threshold":0.2668185044,
+      "sensitivity":0.7916666667,
+      "specificity":0.7083333333,
+      "precision":0.475,
+      "f1":0.59375
     },
     "sex=1":{
-      "threshold":0.5000575873,
-      "sensitivity":0.8369565217,
-      "specificity":0.8070175439,
-      "precision":0.7777777778,
-      "f1":0.8062827225
+      "threshold":0.2668185044,
+      "sensitivity":0.9298245614,
+      "specificity":0.597826087,
+      "precision":0.7412587413,
+      "f1":0.8249027237
     },
     "age=<50":{
-      "threshold":0.5000575873,
-      "sensitivity":0.9672131148,
-      "specificity":0.6538461538,
-      "precision":0.8676470588,
-      "f1":0.9147286822
+      "threshold":0.2668185044,
+      "sensitivity":0.9230769231,
+      "specificity":0.8360655738,
+      "precision":0.7058823529,
+      "f1":0.8
     },
     "age=50-59":{
-      "threshold":0.5000575873,
-      "sensitivity":0.8769230769,
-      "specificity":0.8,
-      "precision":0.8260869565,
-      "f1":0.8507462687
+      "threshold":0.2668185044,
+      "sensitivity":0.9,
+      "specificity":0.6153846154,
+      "precision":0.6835443038,
+      "f1":0.7769784173
     },
     "age=60+":{
-      "threshold":0.5000575873,
-      "sensitivity":0.8421052632,
-      "specificity":0.8653846154,
-      "precision":0.8205128205,
-      "f1":0.8311688312
+      "threshold":0.2668185044,
+      "sensitivity":0.9038461538,
+      "specificity":0.3947368421,
+      "precision":0.6714285714,
+      "f1":0.7704918033
     }
   },
   "caveat":{

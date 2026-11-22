@@ -1,7 +1,7 @@
 export interface PatientFeatures {
   age: number; sex: number; cp: number; trestbps: number; chol: number; fbs: number;
   restecg: number; thalach: number; exang: number; oldpeak: number; slope: number;
-  ca: number; thal: number;
+  ca: number | null; thal: number | null; // null = test not done
 }
 
 export type RiskFlag = "High Risk" | "Low Risk";
@@ -12,6 +12,9 @@ export interface ScoreResponse {
   model_version: string;
   voting_strategy: string;
   threshold: number;
+  model_used: "full" | "no_scan";
+  missing_tests: string[];
+  notice: string | null;
   timestamp: string;
   disclaimer: string;
 }
@@ -52,6 +55,7 @@ export interface ModelInfo {
     precision_recall: Array<{ precision: number; recall: number }> | null;
     threshold_marker: { threshold: number } | null;
   } | null;
+  noscan_model?: ModelInfo | null;
 }
 
 export interface ModelCard { format: string; content: string; }

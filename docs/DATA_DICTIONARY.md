@@ -32,18 +32,18 @@ spells out exactly what changed.
 |---|---|---|---|
 | `age` | int | 0–120 (observed: 29–77) | Age in years |
 | `sex` | int | {0,1} | 1 = male, 0 = female |
-| `cp` | int | {0,1,2,3} | Chest pain type (0=typical angina ... 3=asymptomatic) |
+| `cp` | int | {0,1,2,3} | Chest pain type (0=asymptomatic, 1=atypical angina, 2=non-anginal, 3=typical angina) |
 | `trestbps` | int | 60–260 (observed: 94–200) | Resting blood pressure, mm Hg |
 | `chol` | int | 50–700 (observed: 126–564) | Serum cholesterol, mg/dl |
 | `fbs` | int | {0,1} | Fasting blood sugar > 120 mg/dl |
-| `restecg` | int | {0,1,2} | Resting ECG result |
+| `restecg` | int | {0,1,2} | Resting ECG (0=LV hypertrophy, 1=normal, 2=ST-T abnormality) |
 | `thalach` | int | 60–250 (observed: 71–202) | Max heart rate achieved |
 | `exang` | int | {0,1} | Exercise-induced angina |
 | `oldpeak` | float | 0.0–7.0 (observed: 0.0–6.2) | ST depression vs. rest |
-| `slope` | int | {0,1,2} | Slope of peak exercise ST segment |
+| `slope` | int | {0,1,2} | Slope of peak exercise ST segment (0=down, 1=flat, 2=up) |
 | `ca` | int | {0,1,2,3} documented; **5 rows observed at 4** | Major vessels colored by fluoroscopy |
-| `thal` | int | {1,2,3} documented; **2 rows observed at 0** | Thalassemia code |
-| `target` | int | {0,1} | 1 = heart disease present |
+| `thal` | int | {1,2,3} documented; **2 rows observed at 0** | Thallium scan (1=fixed defect, 2=normal, 3=reversible defect) |
+| `target` | int | {0,1} | After `load_raw_dataset()`: 1 = heart disease present. **Inverted in the raw CSV** (see below) |
 
 Full clinical range bounds used for programmatic validation live in
 `training/src/data/schema.py` (single source of truth — this table mirrors
@@ -53,21 +53,23 @@ it for human reading, so if they ever drift, the code is authoritative).
 
 | Field | UCI-documented (raw file) | This CSV | Note |
 |---|---|---|---|
-| `cp` | 1–4 | 0–3 | Shifted down by 1 |
-| `slope` | 1–3 | 0–2 | Shifted down by 1 |
-| `thal` | {3, 6, 7} | {0,1,2,3} observed | Recoded, not a simple shift |
-| `num`/`target` | 0–4 (multi-class) | {0,1} (binary) | Pre-binarized |
+| `cp` | 1, 2, 3, 4 | 3, 1, 2, 0 | Recoded, not a simple shift |
+| `restecg` | 0, 1, 2 | 1, 2, 0 | Recoded, not a simple shift |
+| `slope` | 1, 2, 3 | 2, 1, 0 | Order reversed |
+| `thal` | 3, 6, 7, `?` | 2, 1, 3, 0 | Recoded |
+| `ca` | 0–3, `?` | 0–3, 4 | Missing became 4 |
+| `num`/`target` | 0 (healthy), 1–4 (disease) | **1 (healthy), 0 (disease)** | Binarized **and inverted**; ingestion flips it back |
+
+These mappings were verified by matching all 303 rows to UCI
+`processed.cleveland.data`; every code maps one-to-one. See
+`docs/adr/ADR-006-target-label-inversion.md`.
 
 ## Known data quality issues (confirmed by `training/src/data/validation.py`)
 
 1. **7 out-of-documented-range values.** 5 rows have `ca == 4` (documented
-   max is 3); 2 rows have `thal == 0` (documented minimum is 1). These are
-   very likely where the original UCI file's 6 `?` (missing) values landed
-   after this variant's cleaning process coerced them to an integer instead
-   of dropping them — 6 is suspiciously close to 7, and the original file is
-   documented to have exactly 6 missing values across `ca` and `thal`. This
-   is a hypothesis stated openly, not a fact — the exact provenance can't be
-   confirmed without the original preprocessing script. **No value is
+   max is 3); 2 rows have `thal == 0` (documented minimum is 1). Row
+   matching confirms these are the original file's `?` (missing) values: 4 `ca`
+   and 2 `thal`, plus one counted twice because of the duplicate row. **No value is
    dropped or imputed at this stage** — that decision is deferred to Week 4
    leakage-safe feature engineering, per PRD §10.4.
 2. **1 duplicate row pair** (index 163 and 164, identical across all 14

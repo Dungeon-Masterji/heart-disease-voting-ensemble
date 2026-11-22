@@ -86,3 +86,15 @@ def test_rate_limiter_blocks_then_recovers():
     t[0] = 61.0
     assert lim.allow("a")            # window passed
     assert SlidingWindowLimiter(0).allow("x")   # 0 disables limiting
+
+
+@pytest.mark.parametrize("missing", [["ca"], ["thal"], ["ca", "thal"]])
+def test_full_model_refuses_any_missing_scan(tmp_path, missing):
+    p = Predictor.load(*build_artifact(tmp_path))
+    with pytest.raises(ValueError, match=missing[0]):
+        p.predict({**PATIENT, **dict.fromkeys(missing)})
+
+
+def test_noscan_model_ignores_scan_values(tmp_path):
+    p = Predictor.load(*build_artifact(tmp_path, exclude=("ca", "thal")))
+    assert p.predict(PATIENT) == p.predict({**PATIENT, "ca": 3, "thal": 3})

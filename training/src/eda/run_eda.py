@@ -163,11 +163,10 @@ def write_summary(
         f"- Total missing cells (NaN): {int(df.isna().sum().sum())}.",
         "- No NaNs are present in this CSV variant, but validation.py flags "
         "5 rows where `ca`=4 and 2 rows where `thal`=0 — both outside the "
-        "documented coding range for this dataset variant. These almost "
-        "certainly correspond to the 6 originally-missing values in the raw "
-        "UCI Cleveland file (marked `?`) that were coerced to an out-of-range "
-        "integer by whichever preprocessing produced this CSV, rather than "
-        "true clinical measurements. This is flagged, not silently dropped — "
+        "documented coding range for this dataset variant. Row matching against "
+        "the raw UCI Cleveland file confirms these are its missing values "
+        "(marked `?`; 4 `ca` and 2 `thal`, plus one duplicated row), not true "
+        "clinical measurements. This is flagged, not silently dropped — "
         "the imputation/exclusion decision belongs to Week 4 feature "
         "engineering, not to EDA.",
         "",

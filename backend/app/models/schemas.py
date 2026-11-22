@@ -30,7 +30,12 @@ class PatientFeatures(BaseModel):
 
     age: int = Field(..., ge=0, le=120, description="Age in years")
     sex: int = Field(..., ge=0, le=1, description="1 = male, 0 = female")
-    cp: int = Field(..., ge=0, le=3, description="Chest pain type (dataset code 0-3)")
+    cp: int = Field(
+        ...,
+        ge=0,
+        le=3,
+        description="Chest pain: 0 asymptomatic, 1 atypical angina, 2 non-anginal, 3 typical angina",
+    )
     trestbps: int = Field(
         ..., ge=60, le=260, description="Resting blood pressure, mm Hg"
     )
@@ -38,19 +43,33 @@ class PatientFeatures(BaseModel):
     fbs: int = Field(
         ..., ge=0, le=1, description="Fasting blood sugar > 120 mg/dl (1 = yes)"
     )
-    restecg: int = Field(..., ge=0, le=2, description="Resting ECG result (0-2)")
+    restecg: int = Field(
+        ...,
+        ge=0,
+        le=2,
+        description="Resting ECG: 0 LV hypertrophy, 1 normal, 2 ST-T abnormality",
+    )
     thalach: int = Field(..., ge=60, le=250, description="Maximum heart rate achieved")
     exang: int = Field(..., ge=0, le=1, description="Exercise-induced angina (1 = yes)")
     oldpeak: float = Field(
         ..., ge=0.0, le=7.0, description="ST depression induced by exercise"
     )
     slope: int = Field(
-        ..., ge=0, le=2, description="Slope of peak exercise ST segment (0-2)"
+        ..., ge=0, le=2, description="Peak exercise ST slope: 0 down, 1 flat, 2 up"
     )
-    ca: int = Field(
-        ..., ge=0, le=3, description="Major vessels coloured by fluoroscopy (0-3)"
+    ca: int | None = Field(
+        None,
+        ge=0,
+        le=3,
+        description="Major vessels coloured by fluoroscopy (0-3); null or omitted = test not done",
     )
-    thal: int = Field(..., ge=1, le=3, description="Thalassemia code (1-3)")
+    thal: int | None = Field(
+        None,
+        ge=1,
+        le=3,
+        description="Thallium scan: 1 fixed defect, 2 normal, 3 reversible defect; "
+        "null or omitted = test not done",
+    )
 
 
 class ScoreResponse(BaseModel):
@@ -59,6 +78,9 @@ class ScoreResponse(BaseModel):
     model_version: str
     voting_strategy: str
     threshold: float
+    model_used: Literal["full", "no_scan"]
+    missing_tests: list[str]
+    notice: str | None = None
     timestamp: str
     disclaimer: str
 
@@ -67,6 +89,7 @@ class HealthResponse(BaseModel):
     status: str
     model_loaded: bool
     model_version: str | None = None
+    noscan_model_loaded: bool = False
     timestamp: str
 
 

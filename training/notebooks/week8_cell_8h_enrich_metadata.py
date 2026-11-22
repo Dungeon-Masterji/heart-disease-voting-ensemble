@@ -1,3 +1,7 @@
+# OBSOLETE since m2.0.0. train.py writes all of this metadata itself. Pasting this cell would
+# overwrite the served model's metadata with notebook values, so it now stops immediately.
+raise RuntimeError("Obsolete: use `python -m training.src.models.train` instead.")
+
 # PASTE THIS INTO A NEW NOTEBOOK CELL (after cells 8a-8g). It is not meant to be run as a script.
 # Adds everything the dashboard and model card need to the model metadata JSON.
 # The model file itself is untouched, so its SHA-256 stays valid.

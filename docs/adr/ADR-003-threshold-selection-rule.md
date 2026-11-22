@@ -10,8 +10,9 @@ case (false negative) is costlier than an unnecessary follow-up (false positive)
 Pick the highest-specificity threshold whose out-of-fold sensitivity is at least
 0.90 (`TARGET_SENS` in the notebook). Probabilities come from nested-CV outer
 folds, so every patient was scored by a model that never saw them. A second,
-"honest" check re-selects the threshold inside each fold using only the other
-four folds and reports sensitivity/specificity on the held-out fold.
+"honest" check re-selects the threshold for each fold using inner out-of-fold
+predictions on that fold's training part, and reports sensitivity/specificity on
+the held-out fold. (m1.0.0 published a copy of the headline numbers here by mistake.)
 
 ## Consequences
 - The 0.90 target is a documented judgement, not a law; a clinical stakeholder

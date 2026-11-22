@@ -9,3 +9,6 @@ __pycache__/
 .env.local
 data/raw/*.csv
 training/artifacts/runs/*.json
+
+training/artifacts/quick/
+data/external/

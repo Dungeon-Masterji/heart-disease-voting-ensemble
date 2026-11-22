@@ -27,14 +27,22 @@ describe("ScorePage", () => {
 
   it("submits the sample patient and renders the result", async () => {
     mockedScore.mockResolvedValue({
-      risk_probability: 0.8, risk_flag: "High Risk", model_version: "m1.0.0", voting_strategy: "soft",
-      threshold: 0.4, timestamp: "2026-01-01T00:00:00Z", disclaimer: "Not a diagnosis.",
+      risk_probability: 0.8, risk_flag: "High Risk", model_version: "m2.0.0", voting_strategy: "soft",
+      threshold: 0.4, model_used: "full", missing_tests: [], notice: null, timestamp: "2026-01-01T00:00:00Z", disclaimer: "Not a diagnosis.",
     });
     render(<ScorePage />);
     fireEvent.click(screen.getByRole("button", { name: /load sample patient/i }));
     fireEvent.click(screen.getByRole("button", { name: /get risk flag/i }));
     expect(await screen.findByText("High Risk")).toBeInTheDocument();
     expect(mockedScore).toHaveBeenCalledTimes(1);
+  });
+
+  it("sends null when a scan is marked as not done", () => {
+    render(<ScorePage />);
+    fireEvent.click(screen.getByRole("button", { name: /load sample patient/i }));
+    fireEvent.change(screen.getByLabelText(/major vessels/i), { target: { value: "not_done" } });
+    fireEvent.click(screen.getByRole("button", { name: /get risk flag/i }));
+    expect(mockedScore).toHaveBeenCalledWith(expect.objectContaining({ ca: null, thal: 1 }));
   });
 
   it("shows an error with a Retry button when the API fails", async () => {

@@ -16,12 +16,18 @@ def artifact(tmp_path_factory):
     return build_artifact(tmp_path_factory.mktemp("model"))
 
 
+@pytest.fixture(scope="module")
+def noscan_artifact(tmp_path_factory):
+    return build_artifact(tmp_path_factory.mktemp("noscan"), exclude=("ca", "thal"))
+
+
 @pytest.fixture()
-def client(artifact, tmp_path):
+def client(artifact, noscan_artifact, tmp_path):
     model_path, meta_path = artifact
     card = tmp_path / "MODEL_CARD.md"
     card.write_text("# Test card")
     settings = Settings(model_path=model_path, meta_path=meta_path, model_card_path=card,
+                        noscan_model_path=noscan_artifact[0], noscan_meta_path=noscan_artifact[1],
                         rate_limit_per_minute=1000)
     with TestClient(create_app(settings)) as c:     # `with` runs the startup (model load)
         yield c
@@ -120,3 +126,43 @@ def test_rate_limit_429(artifact, tmp_path):
         codes = [c.post(f"{BASE}/score", json=PATIENT).status_code for _ in range(3)]
         assert codes == [200, 200, 429]
         assert c.get(f"{BASE}/health").status_code == 200   # health is never rate-limited
+
+
+def test_complete_patient_uses_the_full_model(client):
+    b = client.post(f"{BASE}/score", json=PATIENT).json()
+    assert b["model_used"] == "full" and b["missing_tests"] == [] and b["notice"] is None
+
+
+@pytest.mark.parametrize("missing", [["ca"], ["thal"], ["ca", "thal"]])
+@pytest.mark.parametrize("as_null", [True, False])
+def test_any_missing_scan_uses_the_noscan_model(client, missing, as_null):
+    body = {k: v for k, v in PATIENT.items() if k not in missing}
+    if as_null:
+        body.update(dict.fromkeys(missing))
+    r = client.post(f"{BASE}/score", json=body)
+    assert r.status_code == 200
+    b = r.json()
+    assert b["model_used"] == "no_scan" and b["model_version"] == "m-test-noscan"
+    assert b["missing_tests"] == missing and "trained without" in b["notice"]
+
+
+def test_other_fields_are_still_required(client):
+    for field in set(PATIENT) - {"ca", "thal"}:
+        assert client.post(f"{BASE}/score", json={**PATIENT, field: None}).status_code == 422
+
+
+def test_noscan_model_missing_only_affects_patients_missing_a_scan(artifact, tmp_path):
+    settings = Settings(model_path=artifact[0], meta_path=artifact[1],
+                        noscan_model_path=tmp_path / "x.joblib", noscan_meta_path=tmp_path / "x.json",
+                        model_card_path=tmp_path / "x.md", rate_limit_per_minute=1000)
+    with TestClient(create_app(settings)) as c:
+        assert c.get(f"{BASE}/health").json()["noscan_model_loaded"] is False
+        assert c.post(f"{BASE}/score", json=PATIENT).status_code == 200
+        for missing in ({"ca": None}, {"thal": None}, {"ca": None, "thal": None}):
+            r = c.post(f"{BASE}/score", json={**PATIENT, **missing})
+            assert r.status_code == 503 and r.json()["error_code"] == "MODEL_UNAVAILABLE"
+
+
+def test_model_endpoint_describes_both_models(client):
+    b = client.get(f"{BASE}/model").json()
+    assert "ca" in b["features"] and "ca" not in b["noscan_model"]["features"]

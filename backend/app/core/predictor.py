@@ -34,9 +34,17 @@ FEATURE_ORDER = [
     "ca",
     "thal",
 ]
+SCAN_FEATURES = ("ca", "thal")
+NOSCAN_NOTICE = (
+    "Less certain: scored by the model trained without fluoroscopy (ca) and thallium "
+    "scan (thal) results. Re-score when both are available."
+)
 DISCLAIMER = "Clinical decision-support signal, not a medical diagnosis."
 HIGH_RISK = "High Risk"
 LOW_RISK = "Low Risk"
+# A model is only served if it declares this label. m1.0.0 was trained on an
+# inverted target (its "risk" was the probability of being healthy).
+LABEL_PREFIX = "1 = heart disease present"
 _FOLD_METRICS = ("sensitivity", "specificity", "f1", "roc_auc")
 
 
@@ -100,6 +108,7 @@ class Predictor:
         self.meta = meta
         self.version: str = meta["model_version"]
         self.threshold: float = float(meta["threshold"])
+        self.features: list[str] = meta.get("features", FEATURE_ORDER)
         self.voting_strategy: str = meta.get("voting_strategy", "soft")
 
     @classmethod
@@ -118,6 +127,11 @@ class Predictor:
         for key in ("model_version", "threshold"):
             if key not in meta:
                 raise ModelUnavailable(f"Model metadata is missing '{key}'")
+        if not str(meta.get("label_definition", "")).startswith(LABEL_PREFIX):
+            raise ModelUnavailable(
+                "Model metadata does not declare a verified disease label "
+                "(see docs/adr/ADR-006-target-label-inversion.md)"
+            )
         if verify_checksum:
             expected = meta.get("artifact_sha256")
             if not expected:
@@ -138,11 +152,13 @@ class Predictor:
         return cls(model, meta)
 
     def predict(self, features: Mapping[str, float]) -> dict:
-        missing = [f for f in FEATURE_ORDER if f not in features]
+        # Scans are never imputed at serving time: the imputer would fill in "normal"
+        # and lower the risk. Such patients belong to the no-scan model (ADR-007).
+        missing = [f for f in self.features if features.get(f) is None]
         if missing:
             raise ValueError(f"Missing features: {missing}")
         row = pd.DataFrame(
-            [[features[f] for f in FEATURE_ORDER]], columns=FEATURE_ORDER
+            [[features[f] for f in self.features]], columns=self.features
         )
         probability = float(self._model.predict_proba(row)[0, 1])
         return {
@@ -162,6 +178,7 @@ class Predictor:
         return clean_json(
             {
                 "model_version": self.version,
+                "features": self.features,
                 "voting_strategy": self.voting_strategy,
                 "threshold": self.threshold,
                 "threshold_rationale": m.get("threshold_rationale", ""),
