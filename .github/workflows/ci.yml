@@ -33,3 +33,18 @@ jobs:
       - run: pip-audit -r training/requirements.txt -r backend/requirements.txt
       - run: python -m pytest training/tests -v
       - run: cd backend && python -m pytest -v
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build

@@ -5,7 +5,7 @@ import type {
 
 const client = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:8000/api/v1",
-  timeout: 15000,
+  timeout: 60000, // a sleeping free-tier server was measured taking 27.5 s to answer
   headers: { "Content-Type": "application/json" },
 });
 

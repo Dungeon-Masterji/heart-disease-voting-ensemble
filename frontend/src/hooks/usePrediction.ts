@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { scorePatient, toApiFailure } from "../services/api";
 import type { ApiFailure, PatientFeatures, ScoreResponse } from "../types";
 
@@ -11,16 +11,22 @@ export type PredictionState =
 export function usePrediction() {
   const [state, setState] = useState<PredictionState>({ status: "idle" });
 
+  // Identifies the newest request: answers to older or abandoned ones are ignored.
+  const latest = useRef(0);
+
   const submit = useCallback(async (features: PatientFeatures) => {
+    const request = ++latest.current;
     setState({ status: "loading" });
     try {
       const result = await scorePatient(features);
+      if (request !== latest.current) return;
       if ("risk_probability" in result === false && "code" in result && "message" in result) {
         setState({ status: "error", error: result as unknown as ApiFailure });
         return;
       }
       setState({ status: "success", result });
     } catch (e) {
+      if (request !== latest.current) return;
       let failure: ApiFailure;
       try {
         failure = toApiFailure(e);
@@ -31,6 +37,9 @@ export function usePrediction() {
     }
   }, []);
 
-  const reset = useCallback(() => setState({ status: "idle" }), []);
+  const reset = useCallback(() => {
+    latest.current += 1;
+    setState({ status: "idle" });
+  }, []);
   return { state, submit, reset };
 }

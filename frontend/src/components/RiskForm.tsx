@@ -6,6 +6,8 @@ import { FIELDS, GROUPS, NOT_DONE, SAMPLE_PATIENT, toFeatures, validateField } f
 interface Props {
   onSubmit: (features: PatientFeatures) => void;
   onReset: () => void;
+  /** Called whenever a value changes, so the page can drop a result that no longer matches. */
+  onEdit?: () => void;
   loading: boolean;
   serverErrors?: FieldError[];
 }
@@ -13,7 +15,7 @@ interface Props {
 const emptyValues = (): Record<string, string> =>
   Object.fromEntries(FIELDS.map((f) => [f.name, ""]));
 
-export default function RiskForm({ onSubmit, onReset, loading, serverErrors }: Props) {
+export default function RiskForm({ onSubmit, onReset, onEdit, loading, serverErrors }: Props) {
   const [values, setValues] = useState<Record<string, string>>(emptyValues);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [submitted, setSubmitted] = useState(false);
@@ -31,6 +33,11 @@ export default function RiskForm({ onSubmit, onReset, loading, serverErrors }: P
   }, [values, touched, submitted, serverErrors]);
 
   const allEmpty = FIELDS.every((f) => values[f.name] === "");
+
+  const changeValues = (next: Record<string, string>) => {
+    setValues(next);
+    onEdit?.();
+  };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -71,7 +78,7 @@ export default function RiskForm({ onSubmit, onReset, loading, serverErrors }: P
                     <select
                       id={id}
                       value={values[spec.name]}
-                      onChange={(e) => setValues({ ...values, [spec.name]: e.target.value })}
+                      onChange={(e) => changeValues({ ...values, [spec.name]: e.target.value })}
                       onBlur={() => setTouched({ ...touched, [spec.name]: true })}
                       aria-invalid={err ? true : undefined}
                       aria-describedby={err ? `${id}-error` : undefined}
@@ -92,7 +99,7 @@ export default function RiskForm({ onSubmit, onReset, loading, serverErrors }: P
                       max={spec.max}
                       step={spec.step ?? 1}
                       value={values[spec.name]}
-                      onChange={(e) => setValues({ ...values, [spec.name]: e.target.value })}
+                      onChange={(e) => changeValues({ ...values, [spec.name]: e.target.value })}
                       onBlur={() => setTouched({ ...touched, [spec.name]: true })}
                       aria-invalid={err ? true : undefined}
                       aria-describedby={err ? `${id}-error` : `${id}-hint`}
@@ -133,7 +140,7 @@ export default function RiskForm({ onSubmit, onReset, loading, serverErrors }: P
         </button>
         <button
           type="button"
-          onClick={() => setValues({ ...SAMPLE_PATIENT })}
+          onClick={() => changeValues({ ...SAMPLE_PATIENT })}
           className="rounded border border-slate-500 px-4 py-2 text-slate-900 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
         >
           Load sample patient
